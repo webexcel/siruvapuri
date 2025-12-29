@@ -22,12 +22,12 @@ const seedData = async () => {
 
     // Insert users
     for (const user of users) {
-      const [result] = await db.query(
-        'INSERT INTO users (email, password, full_name, phone, gender, date_of_birth) VALUES (?, ?, ?, ?, ?, ?)',
+      const result = await db.query(
+        'INSERT INTO users (email, password, full_name, phone, gender, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
         [user.email, user.password, user.full_name, user.phone, user.gender, user.date_of_birth]
       );
 
-      const userId = result.insertId;
+      const userId = result.rows[0].id;
 
       // Create profile based on gender
       const isMale = user.gender === 'male';
@@ -55,7 +55,7 @@ const seedData = async () => {
       await db.query(
         `INSERT INTO profiles (user_id, height, weight, marital_status, religion, caste, mother_tongue,
          education, occupation, annual_income, city, state, country, about_me, profile_picture,
-         looking_for, hobbies, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         looking_for, hobbies, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
         [profile.user_id, profile.height, profile.weight, profile.marital_status, profile.religion,
          profile.caste, profile.mother_tongue, profile.education, profile.occupation, profile.annual_income,
          profile.city, profile.state, profile.country, profile.about_me, profile.profile_picture,
@@ -65,7 +65,7 @@ const seedData = async () => {
       // Create preferences
       await db.query(
         `INSERT INTO preferences (user_id, age_min, age_max, height_min, height_max)
-         VALUES (?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5)`,
         [userId, isMale ? 23 : 25, isMale ? 30 : 35, isMale ? 155 : 170, isMale ? 170 : 185]
       );
 

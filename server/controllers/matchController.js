@@ -48,45 +48,45 @@ const getDailyRecommendations = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     // Get current user data
-    const [currentUser] = await db.query(
-      `SELECT u.*, p.*, TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+    const currentUserResult = await db.query(
+      `SELECT u.*, p.*, EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = ?`,
+       WHERE u.id = $1`,
       [userId]
     );
 
     // Get user preferences
-    const [userPreferences] = await db.query(
-      'SELECT * FROM preferences WHERE user_id = ?',
+    const userPreferencesResult = await db.query(
+      'SELECT * FROM preferences WHERE user_id = $1',
       [userId]
     );
 
-    const user = currentUser[0];
-    const preferences = userPreferences[0] || {};
+    const user = currentUserResult.rows[0];
+    const preferences = userPreferencesResult.rows[0] || {};
 
     // Get opposite gender profiles that user hasn't interacted with
-    const [profiles] = await db.query(
+    const profilesResult = await db.query(
       `SELECT u.id, u.full_name, u.gender, u.date_of_birth,
               p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
               p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies,
-              TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+              EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
        FROM users u
        INNER JOIN profiles p ON u.id = p.user_id
-       WHERE u.gender != ?
-       AND u.id != ?
+       WHERE u.gender != $1
+       AND u.id != $2
        AND u.id NOT IN (
-         SELECT matched_user_id FROM matches WHERE user_id = ?
+         SELECT matched_user_id FROM matches WHERE user_id = $3
          UNION
-         SELECT receiver_id FROM interests WHERE sender_id = ?
+         SELECT receiver_id FROM interests WHERE sender_id = $4
        )
        LIMIT 50`,
       [user.gender, userId, userId, userId]
     );
 
     // Calculate match scores
-    const recommendations = profiles.map(profile => ({
+    const recommendations = profilesResult.rows.map(profile => ({
       ...profile,
       match_score: calculateMatchScore(user, profile, preferences)
     }));
@@ -119,69 +119,79 @@ const searchProfiles = async (req, res) => {
              p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
              p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
              p.about_me, p.profile_picture, p.looking_for, p.hobbies,
-             TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+             EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
-      WHERE u.id != ?
+      WHERE u.id != $1
     `;
 
     const params = [userId];
+    let paramIndex = 2;
 
     // Get current user gender
-    const [currentUser] = await db.query('SELECT gender FROM users WHERE id = ?', [userId]);
-    const userGender = currentUser[0].gender;
+    const currentUserResult = await db.query('SELECT gender FROM users WHERE id = $1', [userId]);
+    const userGender = currentUserResult.rows[0].gender;
 
-    query += ` AND u.gender != ?`;
+    query += ` AND u.gender != $${paramIndex}`;
     params.push(userGender);
+    paramIndex++;
 
     if (age_min) {
-      query += ` AND TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) >= ?`;
+      query += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER >= $${paramIndex}`;
       params.push(age_min);
+      paramIndex++;
     }
 
     if (age_max) {
-      query += ` AND TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) <= ?`;
+      query += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER <= $${paramIndex}`;
       params.push(age_max);
+      paramIndex++;
     }
 
     if (height_min) {
-      query += ` AND p.height >= ?`;
+      query += ` AND p.height >= $${paramIndex}`;
       params.push(height_min);
+      paramIndex++;
     }
 
     if (height_max) {
-      query += ` AND p.height <= ?`;
+      query += ` AND p.height <= $${paramIndex}`;
       params.push(height_max);
+      paramIndex++;
     }
 
     if (religion) {
-      query += ` AND p.religion = ?`;
+      query += ` AND p.religion = $${paramIndex}`;
       params.push(religion);
+      paramIndex++;
     }
 
     if (education) {
-      query += ` AND p.education LIKE ?`;
+      query += ` AND p.education LIKE $${paramIndex}`;
       params.push(`%${education}%`);
+      paramIndex++;
     }
 
     if (city) {
-      query += ` AND p.city LIKE ?`;
+      query += ` AND p.city LIKE $${paramIndex}`;
       params.push(`%${city}%`);
+      paramIndex++;
     }
 
     if (marital_status) {
-      query += ` AND p.marital_status = ?`;
+      query += ` AND p.marital_status = $${paramIndex}`;
       params.push(marital_status);
+      paramIndex++;
     }
 
-    query += ` LIMIT ? OFFSET ?`;
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(parseInt(limit), parseInt(offset));
 
-    const [profiles] = await db.query(query, params);
+    const result = await db.query(query, params);
 
     res.json({
-      profiles,
-      total: profiles.length,
+      profiles: result.rows,
+      total: result.rows.length,
       limit: parseInt(limit),
       offset: parseInt(offset)
     });
@@ -202,17 +212,17 @@ const sendInterest = async (req, res) => {
     }
 
     // Check if interest already exists
-    const [existing] = await db.query(
-      'SELECT id FROM interests WHERE sender_id = ? AND receiver_id = ?',
+    const existingResult = await db.query(
+      'SELECT id FROM interests WHERE sender_id = $1 AND receiver_id = $2',
       [senderId, receiver_id]
     );
 
-    if (existing.length > 0) {
+    if (existingResult.rows.length > 0) {
       return res.status(400).json({ error: 'Interest already sent' });
     }
 
     await db.query(
-      'INSERT INTO interests (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+      'INSERT INTO interests (sender_id, receiver_id, message) VALUES ($1, $2, $3)',
       [senderId, receiver_id, message || '']
     );
 
@@ -228,20 +238,20 @@ const getReceivedInterests = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const [interests] = await db.query(
+    const result = await db.query(
       `SELECT i.id, i.sender_id, i.status, i.message, i.created_at,
               u.full_name, u.gender, u.date_of_birth,
               p.city, p.education, p.occupation, p.profile_picture,
-              TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+              EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
        FROM interests i
        INNER JOIN users u ON i.sender_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE i.receiver_id = ?
+       WHERE i.receiver_id = $1
        ORDER BY i.created_at DESC`,
       [userId]
     );
 
-    res.json({ interests });
+    res.json({ interests: result.rows });
   } catch (error) {
     console.error('Get interests error:', error);
     res.status(500).json({ error: 'Failed to fetch interests' });
@@ -253,20 +263,20 @@ const getSentInterests = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const [interests] = await db.query(
+    const result = await db.query(
       `SELECT i.id, i.receiver_id, i.status, i.message, i.created_at,
               u.full_name, u.gender, u.date_of_birth,
               p.city, p.education, p.occupation, p.profile_picture,
-              TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+              EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
        FROM interests i
        INNER JOIN users u ON i.receiver_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE i.sender_id = ?
+       WHERE i.sender_id = $1
        ORDER BY i.created_at DESC`,
       [userId]
     );
 
-    res.json({ interests });
+    res.json({ interests: result.rows });
   } catch (error) {
     console.error('Get sent interests error:', error);
     res.status(500).json({ error: 'Failed to fetch sent interests' });
@@ -284,17 +294,17 @@ const respondToInterest = async (req, res) => {
     }
 
     // Verify the interest belongs to the user
-    const [interest] = await db.query(
-      'SELECT * FROM interests WHERE id = ? AND receiver_id = ?',
+    const interestResult = await db.query(
+      'SELECT * FROM interests WHERE id = $1 AND receiver_id = $2',
       [interest_id, userId]
     );
 
-    if (interest.length === 0) {
+    if (interestResult.rows.length === 0) {
       return res.status(404).json({ error: 'Interest not found' });
     }
 
     await db.query(
-      'UPDATE interests SET status = ? WHERE id = ?',
+      'UPDATE interests SET status = $1 WHERE id = $2',
       [status, interest_id]
     );
 

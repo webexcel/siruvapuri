@@ -8,9 +8,9 @@ const register = async (req, res) => {
     const { email, password, full_name, phone, gender, date_of_birth } = req.body;
 
     // Check if user already exists
-    const [existingUsers] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+    const existingUsers = await db.query('SELECT id FROM users WHERE email = $1', [email]);
 
-    if (existingUsers.length > 0) {
+    if (existingUsers.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
@@ -18,16 +18,16 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert user
-    const [result] = await db.query(
-      'INSERT INTO users (email, password, full_name, phone, gender, date_of_birth) VALUES (?, ?, ?, ?, ?, ?)',
+    const result = await db.query(
+      'INSERT INTO users (email, password, full_name, phone, gender, date_of_birth) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [email, hashedPassword, full_name, phone || null, gender, date_of_birth || null]
     );
 
-    const userId = result.insertId;
+    const userId = result.rows[0].id;
 
     // Create empty profile and preferences
-    await db.query('INSERT INTO profiles (user_id) VALUES (?)', [userId]);
-    await db.query('INSERT INTO preferences (user_id) VALUES (?)', [userId]);
+    await db.query('INSERT INTO profiles (user_id) VALUES ($1)', [userId]);
+    await db.query('INSERT INTO preferences (user_id) VALUES ($1)', [userId]);
 
     // Generate token
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -54,13 +54,13 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Find user
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const users = await db.query('SELECT * FROM users WHERE email = $1', [email]);
 
-    if (users.length === 0) {
+    if (users.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const user = users[0];
+    const user = users.rows[0];
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -91,22 +91,22 @@ const login = async (req, res) => {
 // Get current user
 const getCurrentUser = async (req, res) => {
   try {
-    const [users] = await db.query(
+    const users = await db.query(
       `SELECT u.id, u.email, u.full_name, u.phone, u.gender, u.date_of_birth, u.created_at,
               p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
               p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies, p.created_by
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = ?`,
+       WHERE u.id = $1`,
       [req.userId]
     );
 
-    if (users.length === 0) {
+    if (users.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user: users[0] });
+    res.json({ user: users.rows[0] });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to fetch user data' });

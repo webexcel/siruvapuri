@@ -9,20 +9,25 @@ cd server
 npm install
 ```
 
-## Step 2: Setup MySQL Database
+## Step 2: Setup PostgreSQL Database
 
-1. Make sure MySQL is running on your system
-2. Open MySQL command line or MySQL Workbench
+1. Make sure PostgreSQL is running on your system
+2. Open psql or pgAdmin
 3. Execute the schema file:
 
 ```bash
-mysql -u root -p < config/schema.sql
+# Using psql
+psql -U postgres -d postgres -c "CREATE DATABASE matrimonial_db;"
+psql -U postgres -d matrimonial_db -f config/schema.sql
 ```
 
-Or manually:
+Or manually in psql:
 ```sql
-mysql -u root -p
-source C:/projects/siruvapuri_new/server/config/schema.sql
+psql -U postgres
+CREATE DATABASE matrimonial_db;
+\c matrimonial_db
+\i C:/projects/siruvapuri_new/server/config/schema.sql
+\q
 ```
 
 ## Step 3: Configure Environment Variables
@@ -30,7 +35,9 @@ source C:/projects/siruvapuri_new/server/config/schema.sql
 The `.env` file is already created in `server/` folder. Update it if needed:
 
 ```env
-DB_PASSWORD=your_mysql_password_here
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password_here
+DB_PORT=5432
 ```
 
 ## Step 4: Seed Sample Data
@@ -50,6 +57,7 @@ npm start
 
 You should see:
 ```
+Connected to PostgreSQL database
 Server is running on port 5000
 Environment: development
 ```
@@ -105,10 +113,11 @@ After seeding, use these accounts to login:
 
 ## Troubleshooting
 
-### MySQL Connection Error
-- Check if MySQL is running
-- Verify DB_PASSWORD in server/.env
+### PostgreSQL Connection Error
+- Check if PostgreSQL is running
+- Verify DB_PASSWORD and DB_USER in server/.env
 - Make sure database 'matrimonial_db' exists
+- Check DB_PORT is correct (default: 5432)
 
 ### Port Already in Use
 - Backend: Change PORT in server/.env
@@ -125,7 +134,7 @@ npm install
 
 ## Next Steps
 
-1. Customize the color scheme in `client/tailwind.config.js`
+1. Customize the color scheme in `client/src/index.css` (TailwindCSS v4 uses CSS-based config)
 2. Add your logo/branding
 3. Add more features like:
    - Photo upload functionality

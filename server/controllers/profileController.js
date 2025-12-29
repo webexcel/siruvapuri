@@ -15,10 +15,12 @@ const updateProfile = async (req, res) => {
     const updateFields = [];
     const updateValues = [];
 
+    let paramIndex = 1;
     allowedFields.forEach(field => {
       if (profileData[field] !== undefined) {
-        updateFields.push(`${field} = ?`);
+        updateFields.push(`${field} = $${paramIndex}`);
         updateValues.push(profileData[field]);
+        paramIndex++;
       }
     });
 
@@ -29,7 +31,7 @@ const updateProfile = async (req, res) => {
     updateValues.push(userId);
 
     await db.query(
-      `UPDATE profiles SET ${updateFields.join(', ')} WHERE user_id = ?`,
+      `UPDATE profiles SET ${updateFields.join(', ')} WHERE user_id = $${paramIndex}`,
       updateValues
     );
 
@@ -46,31 +48,31 @@ const getProfileById = async (req, res) => {
     const { id } = req.params;
     const viewerId = req.userId;
 
-    const [profiles] = await db.query(
+    const result = await db.query(
       `SELECT u.id, u.full_name, u.gender, u.date_of_birth,
               p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
               p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies, p.created_by,
-              TIMESTAMPDIFF(YEAR, u.date_of_birth, CURDATE()) as age
+              EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_of_birth))::INTEGER as age
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = ?`,
+       WHERE u.id = $1`,
       [id]
     );
 
-    if (profiles.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
     // Record profile view
     if (viewerId !== parseInt(id)) {
       await db.query(
-        'INSERT INTO profile_views (viewer_id, viewed_id) VALUES (?, ?)',
+        'INSERT INTO profile_views (viewer_id, viewed_id) VALUES ($1, $2)',
         [viewerId, id]
       );
     }
 
-    res.json({ profile: profiles[0] });
+    res.json({ profile: result.rows[0] });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });
@@ -85,9 +87,9 @@ const updatePreferences = async (req, res) => {
 
     await db.query(
       `UPDATE preferences SET
-       age_min = ?, age_max = ?, height_min = ?, height_max = ?,
-       marital_status = ?, religion = ?, education = ?, occupation = ?, location = ?
-       WHERE user_id = ?`,
+       age_min = $1, age_max = $2, height_min = $3, height_max = $4,
+       marital_status = $5, religion = $6, education = $7, occupation = $8, location = $9
+       WHERE user_id = $10`,
       [age_min, age_max, height_min, height_max, marital_status, religion, education, occupation, location, userId]
     );
 
@@ -101,12 +103,12 @@ const updatePreferences = async (req, res) => {
 // Get user preferences
 const getPreferences = async (req, res) => {
   try {
-    const [preferences] = await db.query(
-      'SELECT * FROM preferences WHERE user_id = ?',
+    const result = await db.query(
+      'SELECT * FROM preferences WHERE user_id = $1',
       [req.userId]
     );
 
-    res.json({ preferences: preferences[0] || {} });
+    res.json({ preferences: result.rows[0] || {} });
   } catch (error) {
     console.error('Get preferences error:', error);
     res.status(500).json({ error: 'Failed to fetch preferences' });

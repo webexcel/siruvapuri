@@ -1,6 +1,6 @@
 # MatriMatch - Matrimonial Web Application
 
-A modern, full-stack matrimonial web application built with React, Node.js, Express, and MySQL. Find your perfect life partner with our intelligent matching system!
+A modern, full-stack matrimonial web application built with React, Node.js, Express, and PostgreSQL. Find your perfect life partner with our intelligent matching system!
 
 ## Features
 
@@ -14,8 +14,9 @@ A modern, full-stack matrimonial web application built with React, Node.js, Expr
 - **Daily Recommendations**: Get curated profile suggestions daily
 
 ### Technical Features
-- Responsive design with TailwindCSS
+- Responsive design with TailwindCSS v4 (CSS-based configuration)
 - RESTful API architecture
+- PostgreSQL database with optimized indexes
 - JWT-based authentication
 - Protected routes and middleware
 - Input validation
@@ -26,15 +27,15 @@ A modern, full-stack matrimonial web application built with React, Node.js, Expr
 
 ### Frontend
 - **React** (v19.2.0) - UI library
-- **Vite** - Build tool and dev server
-- **TailwindCSS** (v4.1.18) - Utility-first CSS framework
+- **Vite** (v7.2.4) - Build tool and dev server
+- **TailwindCSS** (v4.1.18) - Utility-first CSS framework with CSS-based configuration (no JS config needed)
 - **React Router DOM** (v7.11.0) - Client-side routing
 - **Axios** (v1.13.2) - HTTP client
 
 ### Backend
 - **Node.js** - Runtime environment
 - **Express** (v4.18.2) - Web framework
-- **MySQL2** (v3.6.5) - Database driver
+- **PostgreSQL** (v8.11.3 pg driver) - Relational database
 - **bcryptjs** (v2.4.3) - Password hashing
 - **jsonwebtoken** (v9.0.2) - JWT authentication
 - **express-validator** (v7.0.1) - Input validation
@@ -69,11 +70,11 @@ siruvapuri_new/
 │   │   ├── main.jsx
 │   │   └── index.css
 │   ├── package.json
-│   └── tailwind.config.js
+│   └── vite.config.js
 │
 ├── server/                # Node.js backend
 │   ├── config/
-│   │   ├── database.js   # MySQL connection
+│   │   ├── database.js   # PostgreSQL connection
 │   │   └── schema.sql    # Database schema
 │   ├── controllers/
 │   │   ├── authController.js
@@ -98,7 +99,7 @@ siruvapuri_new/
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- MySQL (v8.0 or higher)
+- PostgreSQL (v12 or higher)
 - npm or yarn
 
 ### 1. Clone the Repository
@@ -109,17 +110,22 @@ cd siruvapuri_new
 
 ### 2. Database Setup
 
-1. Start your MySQL server
-2. Create the database and tables:
+1. Start your PostgreSQL server
+2. Create the database:
 
 ```bash
-mysql -u root -p < server/config/schema.sql
+# Using psql command line
+psql -U postgres
+CREATE DATABASE matrimonial_db;
+\c matrimonial_db
+\i server/config/schema.sql
+\q
 ```
 
-Or manually execute the schema.sql file in MySQL:
-```sql
-mysql -u root -p
-source server/config/schema.sql
+Or using a single command:
+```bash
+psql -U postgres -d postgres -c "CREATE DATABASE matrimonial_db;"
+psql -U postgres -d matrimonial_db -f server/config/schema.sql
 ```
 
 ### 3. Backend Setup
@@ -133,8 +139,9 @@ Configure environment variables by editing `server/.env`:
 ```env
 PORT=5000
 DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
 DB_NAME=matrimonial_db
 JWT_SECRET=your_secret_key
 NODE_ENV=development
