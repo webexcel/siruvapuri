@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { authAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 
 const Register = () => {
@@ -63,7 +63,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/register', formData);
+      const response = await authAPI.register(formData);
 
       if (response.data.success) {
         await showSuccess(
