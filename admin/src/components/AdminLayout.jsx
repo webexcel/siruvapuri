@@ -9,9 +9,7 @@ import {
   LogOut,
   Menu,
   X,
-  Shield,
   CreditCard,
-  BarChart3,
   Mail,
   Lock,
   UserPlus
@@ -54,9 +52,16 @@ const AdminLayout = ({ children }) => {
             >
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <div className="flex items-center gap-2">
-              <Shield className="text-primary" size={28} />
-              <h1 className="text-xl font-bold text-gray-800">Siruvapuri Matrimony</h1>
+            <div className="flex items-center gap-3">
+              <img
+                src="/images/logo.png"
+                alt="Siruvapuri Murugan Matrimony"
+                className="h-10 w-auto object-contain"
+              />
+              <div className="flex flex-col">
+                <h1 className="text-lg font-bold text-gray-800 leading-tight">Siruvapuri Murugan</h1>
+                <span className="text-xs text-primary font-medium">Admin Panel</span>
+              </div>
             </div>
           </div>
           <button

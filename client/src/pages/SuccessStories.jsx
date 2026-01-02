@@ -12,7 +12,7 @@ const SuccessStories = () => {
       date: 'November 2023',
       category: 'tamil',
       quote: 'We found each other through Siruvapuri Matrimony. The horoscope matching was precise and perfect. Our families connected instantly and we knew it was meant to be.',
-      image: '/images/couple1.jpg',
+      image: '/images/ss1.png',
       details: 'Both families were looking for a match within our community and Siruvapuri Matrimony helped us find exactly what we were looking for.'
     },
     {
@@ -22,7 +22,7 @@ const SuccessStories = () => {
       date: 'January 2024',
       category: 'tamil',
       quote: 'A seamless experience. Our families connected instantly and everything fell into place. The verification process gave us confidence.',
-      image: '/images/couple2.jpg',
+      image: '/images/ss2.jpg',
       details: 'We were impressed by the detailed profiles and the genuine nature of the platform. It made the entire process smooth and trustworthy.'
     },
     {
@@ -32,7 +32,7 @@ const SuccessStories = () => {
       date: 'March 2024',
       category: 'tamil',
       quote: 'The verification process gave us trust and peace. Highly recommended for serious matches. We are grateful for this platform.',
-      image: '/images/couple3.jpg',
+      image: '/images/ss3.jpeg',
       details: 'Finding a compatible match was our priority and Siruvapuri Matrimony delivered exactly that with their thorough matching system.'
     },
     {
@@ -42,17 +42,17 @@ const SuccessStories = () => {
       date: 'February 2024',
       category: 'south-indian',
       quote: 'We found each other through the platform and couldn\'t be happier. The profiles were genuine. Thank you for helping us start our journey together.',
-      image: '/images/couple4.jpg',
+      image: '/images/ss4.webp',
       details: 'As a South Indian family settled in Bangalore, we wanted to connect with our roots. This platform made it possible.'
     },
     {
       id: 5,
-      names: 'Sammer & Aisha',
+      names: 'Kumar & Aishwariya',
       location: 'Chennai',
       date: 'April 2024',
       category: 'inter-community',
       quote: 'It was love at first sight thanks to the detailed profiles. The compatibility matching is spot on. We are grateful.',
-      image: '/images/couple5.jpg',
+      image: '/images/ss5.jpeg',
       details: 'The platform respects all communities and helped us find each other despite different backgrounds.'
     },
     {
@@ -62,7 +62,7 @@ const SuccessStories = () => {
       date: 'May 2024',
       category: 'tamil',
       quote: 'Finding love later in life seemed difficult, but this site made it easy. We connected over shared values.',
-      image: '/images/couple6.jpg',
+      image: '/images/ss6.webp',
       details: 'Age is just a number. We found each other at the right time thanks to this wonderful platform.'
     },
     {
@@ -72,7 +72,7 @@ const SuccessStories = () => {
       date: 'June 2024',
       category: 'tamil',
       quote: 'The traditional approach combined with modern technology made our match perfect. Our families are overjoyed.',
-      image: '/images/couple7.jpg',
+      image: '/images/ss7.jpeg',
       details: 'We appreciated how the platform balanced tradition with convenience. It felt like having a trusted family friend help with the match.'
     },
     {
@@ -82,7 +82,7 @@ const SuccessStories = () => {
       date: 'July 2024',
       category: 'south-indian',
       quote: 'From the first meeting to our wedding, everything was blessed. Thank you Siruvapuri Murugan Matrimonial!',
-      image: '/images/couple8.jpg',
+      image: '/images/ss8.jpg',
       details: 'Our horoscopes matched perfectly and our families felt an instant connection. We believe it was divine intervention.'
     }
   ];
@@ -94,7 +94,7 @@ const SuccessStories = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 to-primary/5 py-16">
+      <section className="from-primary/10 to-primary/5 py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Heart className="w-16 h-16 text-primary mx-auto mb-6" />
