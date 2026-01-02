@@ -70,50 +70,60 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
   const membershipBadge = getMembershipBadge(profile.membership_type);
 
   return (
-    <div className="card hover:scale-105 transition-transform duration-200">
+    <div className="card p-3 sm:p-4 md:p-6 hover:scale-[1.02] sm:hover:scale-105 transition-transform duration-200">
       <div className="relative">
         <img
           src={profile.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`}
           alt={profile.full_name}
-          className="w-full h-64 object-cover rounded-lg mb-4"
+          className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg mb-3 sm:mb-4"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`;
           }}
         />
         {showMatchScore && profile.match_score !== undefined && (
-          <div className="absolute top-2 right-2 bg-white rounded-full px-3 py-1 shadow-md">
-            <span className={`font-bold text-lg ${getMatchScoreColor(profile.match_score)}`}>
+          <div className="absolute top-2 right-2 bg-white rounded-full px-2 sm:px-3 py-1 shadow-md">
+            <span className={`font-bold text-sm sm:text-lg ${getMatchScoreColor(profile.match_score)}`}>
               {profile.match_score}%
             </span>
-            <span className="text-xs text-gray-600 ml-1">Match</span>
+            <span className="text-[10px] sm:text-xs text-gray-600 ml-1">Match</span>
           </div>
         )}
         {membershipBadge && (
-          <div className={`absolute top-2 left-2 ${membershipBadge.bg} text-white text-xs font-bold px-2 py-1 rounded-full shadow-md flex items-center gap-1`}>
+          <div className={`absolute top-2 left-2 ${membershipBadge.bg} text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md flex items-center gap-0.5 sm:gap-1`}>
             <span>{membershipBadge.icon}</span>
-            <span>{membershipBadge.text}</span>
+            <span className="hidden sm:inline">{membershipBadge.text}</span>
           </div>
         )}
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-xl font-bold text-gray-800">{profile.full_name}</h3>
+      <div className="space-y-1 sm:space-y-2">
+        <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 truncate">{profile.full_name}</h3>
 
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
           <span>{profile.age || calculateAge(profile.date_of_birth)} yrs</span>
-          {profile.height && <span>{profile.height} cm</span>}
-          {profile.city && <span>{profile.city}</span>}
+          {profile.height && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span>{profile.height} cm</span>
+            </>
+          )}
+          {profile.city && (
+            <>
+              <span className="text-gray-300">•</span>
+              <span className="truncate max-w-[80px] sm:max-w-none">{profile.city}</span>
+            </>
+          )}
         </div>
 
-        <div className="space-y-1 text-sm">
+        <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
           {profile.education && (
-            <p className="text-gray-700">
+            <p className="text-gray-700 truncate">
               <span className="font-semibold">Education:</span> {profile.education}
             </p>
           )}
           {profile.occupation && (
-            <p className="text-gray-700">
+            <p className="text-gray-700 truncate">
               <span className="font-semibold">Occupation:</span> {profile.occupation}
             </p>
           )}
@@ -125,15 +135,15 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
         </div>
 
         {profile.about_me && (
-          <p className="text-gray-600 text-sm line-clamp-2 mt-2">
+          <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mt-1 sm:mt-2">
             {profile.about_me}
           </p>
         )}
 
-        <div className="flex space-x-3 pt-4">
+        <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4">
           <button
             onClick={handleViewProfile}
-            className="flex-1 btn-secondary text-sm py-2"
+            className="flex-1 btn-secondary text-xs sm:text-sm py-2 sm:py-2.5"
           >
             View Profile
           </button>
@@ -141,7 +151,7 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
             <button
               onClick={handleSendInterest}
               disabled={sendingInterest || interestSent}
-              className={`flex-1 text-sm py-2 flex items-center justify-center gap-2 ${
+              className={`flex-1 text-xs sm:text-sm py-2 sm:py-2.5 flex items-center justify-center gap-1 sm:gap-2 ${
                 interestSent
                   ? 'bg-green-100 text-green-700 rounded-lg cursor-not-allowed'
                   : 'btn-primary disabled:opacity-50'
@@ -149,18 +159,18 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
             >
               {sendingInterest ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Sending...
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="hidden sm:inline">Sending...</span>
                 </>
               ) : interestSent ? (
                 <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Sent
+                  <span>Sent</span>
                 </>
               ) : (
-                'Send Interest'
+                <span>Send Interest</span>
               )}
             </button>
           )}

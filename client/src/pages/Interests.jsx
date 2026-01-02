@@ -4,42 +4,42 @@ import { matchAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 
 const InterestsSkeleton = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="container mx-auto px-4">
-      <div className="mb-8 animate-pulse">
-        <div className="h-8 w-32 bg-gray-200 rounded mb-2"></div>
-        <div className="h-4 w-64 bg-gray-200 rounded"></div>
+  <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div className="container mx-auto px-3 sm:px-4">
+      <div className="mb-4 sm:mb-8 animate-pulse">
+        <div className="h-6 sm:h-8 w-24 sm:w-32 bg-gray-200 rounded mb-2"></div>
+        <div className="h-4 w-48 sm:w-64 bg-gray-200 rounded"></div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="border-b border-gray-200">
-          <div className="flex space-x-8">
-            <div className="h-6 w-24 bg-gray-200 rounded py-4"></div>
-            <div className="h-6 w-20 bg-gray-200 rounded py-4"></div>
+          <div className="flex space-x-4 sm:space-x-8">
+            <div className="h-6 w-20 sm:w-24 bg-gray-200 rounded py-4"></div>
+            <div className="h-6 w-16 sm:w-20 bg-gray-200 rounded py-4"></div>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="card animate-pulse">
-            <div className="flex items-start space-x-4">
-              <div className="w-20 h-20 bg-gray-200 rounded-lg"></div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="h-5 w-32 bg-gray-200 rounded"></div>
-                    <div className="h-4 w-48 bg-gray-200 rounded"></div>
-                    <div className="h-4 w-36 bg-gray-200 rounded"></div>
+          <div key={i} className="card p-3 sm:p-4 md:p-6 animate-pulse">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 rounded-lg flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 sm:h-5 w-24 sm:w-32 bg-gray-200 rounded"></div>
+                    <div className="h-3 sm:h-4 w-32 sm:w-48 bg-gray-200 rounded"></div>
+                    <div className="h-3 sm:h-4 w-24 sm:w-36 bg-gray-200 rounded"></div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <div className="h-6 w-16 bg-gray-200 rounded-full"></div>
-                    <div className="h-3 w-20 bg-gray-200 rounded mt-1"></div>
+                  <div className="flex flex-col items-end flex-shrink-0">
+                    <div className="h-5 sm:h-6 w-14 sm:w-16 bg-gray-200 rounded-full"></div>
+                    <div className="h-3 w-16 sm:w-20 bg-gray-200 rounded mt-1"></div>
                   </div>
                 </div>
-                <div className="flex space-x-3 mt-4">
-                  <div className="h-9 w-20 bg-gray-200 rounded-lg"></div>
-                  <div className="h-9 w-20 bg-gray-200 rounded-lg"></div>
+                <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
+                  <div className="h-8 sm:h-9 w-16 sm:w-20 bg-gray-200 rounded-lg"></div>
+                  <div className="h-8 sm:h-9 w-16 sm:w-20 bg-gray-200 rounded-lg"></div>
                 </div>
               </div>
             </div>
@@ -87,41 +87,41 @@ const Interests = () => {
   };
 
   const InterestCard = ({ interest, type }) => (
-    <div className="card">
-      <div className="flex items-start space-x-4">
+    <div className="card p-3 sm:p-4 md:p-6">
+      <div className="flex items-start gap-3 sm:gap-4">
         <img
           src={interest.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=00D26A&color=fff`}
           alt={interest.full_name}
-          className="w-20 h-20 rounded-lg object-cover"
+          className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover flex-shrink-0"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=00D26A&color=fff`;
           }}
         />
 
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <Link
                 to={`/profile/${type === 'received' ? interest.sender_id : interest.receiver_id}`}
-                className="text-lg font-bold text-gray-800 hover:text-primary"
+                className="text-sm sm:text-base md:text-lg font-bold text-gray-800 hover:text-primary block truncate"
               >
                 {interest.full_name}
               </Link>
-              <p className="text-sm text-gray-600">
-                {interest.age} years • {interest.city || 'Location not specified'}
+              <p className="text-xs sm:text-sm text-gray-600 truncate">
+                {interest.age} yrs • {interest.city || 'Location N/A'}
               </p>
               {interest.education && (
-                <p className="text-sm text-gray-600">{interest.education}</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate hidden sm:block">{interest.education}</p>
               )}
               {interest.occupation && (
-                <p className="text-sm text-gray-600">{interest.occupation}</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate hidden sm:block">{interest.occupation}</p>
               )}
             </div>
 
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end flex-shrink-0">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold ${
                   interest.status === 'sent'
                     ? 'bg-blue-100 text-blue-800'
                     : interest.status === 'accepted'
@@ -131,27 +131,27 @@ const Interests = () => {
               >
                 {interest.status.charAt(0).toUpperCase() + interest.status.slice(1)}
               </span>
-              <span className="text-xs text-gray-500 mt-1">
+              <span className="text-[10px] sm:text-xs text-gray-500 mt-1">
                 {new Date(interest.created_at).toLocaleDateString()}
               </span>
             </div>
           </div>
 
           {interest.message && (
-            <p className="text-sm text-gray-700 mt-2 italic">"{interest.message}"</p>
+            <p className="text-xs sm:text-sm text-gray-700 mt-2 italic line-clamp-2">"{interest.message}"</p>
           )}
 
           {type === 'received' && interest.status === 'sent' && (
-            <div className="flex space-x-3 mt-4">
+            <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
               <button
                 onClick={() => handleRespond(interest.id, 'accepted')}
-                className="btn-primary text-sm py-2 px-4 cursor-pointer"
+                className="btn-primary text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4 cursor-pointer"
               >
                 Accept
               </button>
               <button
                 onClick={() => handleRespond(interest.id, 'rejected')}
-                className="btn-secondary text-sm py-2 px-4 cursor-pointer"
+                className="btn-secondary text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4 cursor-pointer"
               >
                 Decline
               </button>
@@ -167,20 +167,20 @@ const Interests = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Interests</h1>
-          <p className="text-gray-600">Manage your sent and received interests</p>
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1 sm:mb-2">Interests</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your sent and received interests</p>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8">
+            <nav className="flex">
               <button
                 onClick={() => setActiveTab('received')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`flex-1 sm:flex-none py-3 sm:py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors ${
                   activeTab === 'received'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -190,7 +190,7 @@ const Interests = () => {
               </button>
               <button
                 onClick={() => setActiveTab('sent')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`flex-1 sm:flex-none py-3 sm:py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors ${
                   activeTab === 'sent'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -203,20 +203,20 @@ const Interests = () => {
         </div>
 
         {/* Content */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {activeTab === 'received' ? (
             receivedInterests.length > 0 ? (
               receivedInterests.map((interest) => (
                 <InterestCard key={interest.id} interest={interest} type="received" />
               ))
             ) : (
-              <div className="card text-center py-12">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="card text-center py-8 sm:py-12">
+                <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Interests Received</h3>
-                <p className="text-gray-600">
-                  You haven't received any interests yet. Keep your profile updated to attract more matches!
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Interests Received</h3>
+                <p className="text-sm sm:text-base text-gray-600 px-4">
+                  You haven't received any interests yet. Keep your profile updated!
                 </p>
               </div>
             )
@@ -225,15 +225,15 @@ const Interests = () => {
               <InterestCard key={interest.id} interest={interest} type="sent" />
             ))
           ) : (
-            <div className="card text-center py-12">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="card text-center py-8 sm:py-12">
+              <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Interests Sent</h3>
-              <p className="text-gray-600 mb-4">
-                You haven't sent any interests yet. Start exploring profiles to find your match!
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Interests Sent</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 px-4">
+                Start exploring profiles to find your match!
               </p>
-              <Link to="/recommendations" className="btn-primary inline-block">
+              <Link to="/recommendations" className="btn-primary inline-block text-sm sm:text-base">
                 View Recommendations
               </Link>
             </div>

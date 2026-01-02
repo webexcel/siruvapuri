@@ -86,22 +86,22 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section with Wedding Image Background */}
       <section
-        className="relative min-h-[600px] bg-cover bg-center bg-no-repeat"
+        className="relative min-h-[400px] sm:min-h-[500px] md:min-h-[600px] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: ` url('./images/home.png')`,
           backgroundSize: 'cover',
         }}
       >
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30 sm:from-black/60 sm:to-black/30"></div>
 
-        <div className="relative container mx-auto px-4 py-16">
+        <div className="relative container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
           <AnimateOnScroll animation="fade-up" duration={800}>
             <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif italic text-white mb-4 mt-28 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif italic text-white mb-3 sm:mb-4 mt-12 sm:mt-20 md:mt-28 leading-tight">
                 Begin your auspicious journey toward divine union
               </h1>
-              <p className="text-lg md:text-xl text-white/90 mb-8">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8">
                 Find a soulmate who shares your heritage, values and beliefs. We bring together families with warmth.
               </p>
             </div>
@@ -110,16 +110,16 @@ const Home = () => {
 
         {/* Quick Registration Form */}
         {!isAuthenticated && (
-          <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-24 w-full max-w-5xl px-4">
+          <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-48 sm:-bottom-32 md:-bottom-24 w-full max-w-5xl px-3 sm:px-4">
             <AnimateOnScroll animation="fade-up" delay={200} duration={800}>
-              <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
-                <h2 className="text-center text-xl font-semibold text-gray-800 mb-6 flex items-center justify-center gap-2">
-                  <span className="text-2xl">🤝</span>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 border border-gray-100">
+                <h2 className="text-center text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center justify-center gap-1 sm:gap-2">
+                  <span className="text-lg sm:text-2xl">🤝</span>
                   Quick Registration
-                  <span className="text-2xl">🤝</span>
+                  <span className="text-lg sm:text-2xl">🤝</span>
                 </h2>
 
-                <form onSubmit={handleQuickRegister} className="flex flex-col md:flex-row gap-4 items-end">
+                <form onSubmit={handleQuickRegister} className="flex flex-col md:flex-row gap-3 sm:gap-4 items-end">
                   <div className="flex-1 w-full">
                     <input
                       type="text"
@@ -127,7 +127,7 @@ const Home = () => {
                       placeholder="Your Name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                       required
                     />
                   </div>
@@ -137,7 +137,7 @@ const Home = () => {
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white transition-all duration-300"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white transition-all duration-300"
                       required
                     >
                       <option value="">Gender</option>
@@ -153,14 +153,14 @@ const Home = () => {
                       placeholder="email@example.com"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                       required
                     />
                   </div>
 
                   <div className="flex-1 w-full">
                     <div className="flex">
-                      <span className="px-3 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">
+                      <span className="px-2 sm:px-3 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg sm:rounded-l-xl text-gray-600">
                         +91
                       </span>
                       <input
@@ -169,7 +169,7 @@ const Home = () => {
                         placeholder="Mobile Number"
                         value={formData.mobile}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-r-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-r-lg sm:rounded-r-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
                         required
                       />
                     </div>
@@ -177,7 +177,7 @@ const Home = () => {
 
                   <button
                     type="submit"
-                    className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-primary to-green-500 hover:from-green-500 hover:to-primary text-white font-semibold rounded-xl transition-all duration-300 whitespace-nowrap shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5"
+                    className="w-full md:w-auto px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-primary to-green-500 hover:from-green-500 hover:to-primary text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5"
                   >
                     CONTINUE
                   </button>
@@ -189,27 +189,27 @@ const Home = () => {
       </section>
 
       {/* Spacer for registration form */}
-      {!isAuthenticated && <div className="h-32"></div>}
+      {!isAuthenticated && <div className="h-56 sm:h-40 md:h-32"></div>}
 
       {/* Three Steps Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 md:py-20 bg-white">
+        <div className="container mx-auto px-3 sm:px-4">
           <AnimateOnScroll animation="fade-up">
-            <div className="flex items-center justify-center mb-12">
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-24"></div>
-              <Settings className="mx-4 text-primary" size={24} />
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-24"></div>
+            <div className="flex items-center justify-center mb-6 sm:mb-8 md:mb-12">
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
+              <Settings className="mx-2 sm:mx-4 text-primary" size={20} />
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-2 sm:mb-4">
               Three Steps For Your Muhurtham
             </h2>
-            <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-gray-500 text-sm sm:text-base mb-8 sm:mb-12 max-w-2xl mx-auto px-2">
               Simple and easy process to find your perfect life partner
             </p>
           </AnimateOnScroll>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto">
             <AnimateOnScroll animation="fade-up" delay={0}>
               <StepCard
                 icon={<User className="text-primary" size={28} />}
@@ -242,30 +242,30 @@ const Home = () => {
       </section>
 
       {/* Blessed Matches Section */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-4">
+      <section className="py-10 sm:py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto px-3 sm:px-4">
           <AnimateOnScroll animation="fade-up">
-            <div className="flex items-center justify-center mb-6">
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-24"></div>
-              <div className="mx-4 text-primary">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center justify-center mb-4 sm:mb-6">
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
+              <div className="mx-2 sm:mx-4 text-primary">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"/>
                 </svg>
               </div>
-              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-24"></div>
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
             </div>
 
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-2">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-2">
               Blessed Matches from Our Community
             </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-green-400 mx-auto mb-4 rounded-full"></div>
-            <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto">
+            <div className="w-16 sm:w-20 h-1 bg-gradient-to-r from-primary to-green-400 mx-auto mb-3 sm:mb-4 rounded-full"></div>
+            <p className="text-center text-gray-500 text-sm sm:text-base mb-8 sm:mb-12 max-w-2xl mx-auto px-2">
               Real stories from couples who found their perfect match through Siruvapuri Matrimony
             </p>
           </AnimateOnScroll>
 
           {/* Success Stories Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto mb-10 sm:mb-16">
             {successStories.map((story, index) => (
               <AnimateOnScroll key={story.id} animation="fade-up" delay={index * 150}>
                 <SuccessStoryCard story={story} />
@@ -274,7 +274,7 @@ const Home = () => {
           </div>
 
           {/* Extended Stories - Alternating Layout */}
-          <div className="max-w-5xl mx-auto space-y-20">
+          <div className="max-w-5xl mx-auto space-y-10 sm:space-y-16 md:space-y-20">
             {extendedStories.map((story, index) => (
               <AnimateOnScroll
                 key={story.id}
@@ -288,10 +288,10 @@ const Home = () => {
 
           {/* View More Stories Button */}
           <AnimateOnScroll animation="fade-up" delay={200}>
-            <div className="text-center mt-16">
+            <div className="text-center mt-10 sm:mt-16">
               <Link
                 to="/success-stories"
-                className="inline-flex items-center px-8 py-3 border-2 border-gray-800 text-gray-800 font-semibold rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 hover:shadow-lg"
+                className="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-800 text-gray-800 font-semibold rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 hover:shadow-lg"
               >
                 View More Stories →
               </Link>
@@ -301,45 +301,45 @@ const Home = () => {
       </section>
 
       {/* Safety & Trust Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+      <section className="py-10 sm:py-16 md:py-20 bg-white">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8 lg:gap-12">
             {/* Left Content */}
-            <AnimateOnScroll animation="fade-right" className="lg:w-1/3">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+            <AnimateOnScroll animation="fade-right" className="lg:w-1/3 text-center lg:text-left">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">
                 Safety & Trust<br />for Your Family
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm sm:text-base">
                 Every profile is checked to ensure a trustworthy and secure matchmaking experience.
               </p>
             </AnimateOnScroll>
 
             {/* Trust Features */}
-            <div className="flex flex-wrap justify-center gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-4 sm:gap-8 lg:gap-12">
               <AnimateOnScroll animation="fade-up" delay={0}>
                 <TrustFeature
-                  icon={<Phone size={24} />}
+                  icon={<Phone size={20} />}
                   title="Mobile-verified"
                   subtitle="Profiles"
                 />
               </AnimateOnScroll>
               <AnimateOnScroll animation="fade-up" delay={100}>
                 <TrustFeature
-                  icon={<Shield size={24} />}
+                  icon={<Shield size={20} />}
                   title="Manual Review"
                   subtitle="by Team"
                 />
               </AnimateOnScroll>
               <AnimateOnScroll animation="fade-up" delay={200}>
                 <TrustFeature
-                  icon={<Users size={24} />}
+                  icon={<Users size={20} />}
                   title="Family-oriented"
                   subtitle="Matches"
                 />
               </AnimateOnScroll>
               <AnimateOnScroll animation="fade-up" delay={300}>
                 <TrustFeature
-                  icon={<Flag size={24} />}
+                  icon={<Flag size={20} />}
                   title="Report & Block"
                   subtitle="Safety"
                 />
@@ -349,15 +349,15 @@ const Home = () => {
 
           {/* Help Section */}
           <AnimateOnScroll animation="fade-up" delay={200}>
-            <div className="flex flex-col md:flex-row items-center justify-between mt-16 pt-8 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white rounded-2xl p-8">
-              <div>
-                <h3 className="font-bold text-gray-800 text-lg">Need Help?</h3>
-                <p className="text-gray-600 text-sm">Our support team is here to assist you</p>
+            <div className="flex flex-col items-center text-center md:flex-row md:text-left md:items-center justify-between mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8">
+              <div className="mb-4 md:mb-0">
+                <h3 className="font-bold text-gray-800 text-base sm:text-lg">Need Help?</h3>
+                <p className="text-gray-600 text-xs sm:text-sm">Our support team is here to assist you</p>
               </div>
-              <div className="flex gap-4 mt-4 md:mt-0">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <a
                   href="tel:+919999999999"
-                  className="px-6 py-2.5 border-2 border-gray-800 text-gray-800 font-semibold rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300"
+                  className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base border-2 border-gray-800 text-gray-800 font-semibold rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 text-center"
                 >
                   Call Us
                 </a>
@@ -365,7 +365,7 @@ const Home = () => {
                   href="https://wa.me/919999999999"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-2.5 bg-gradient-to-r from-primary to-green-500 text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5"
+                  className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-primary to-green-500 text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 text-center"
                 >
                   Connect on WhatsApp
                 </a>
@@ -380,22 +380,22 @@ const Home = () => {
 
 // Step Card Component
 const StepCard = ({ icon, iconBg, title, description, step }) => (
-  <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center hover:shadow-xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
-    <div className="absolute top-4 right-4 text-6xl font-bold text-gray-100 group-hover:text-primary/10 transition-colors duration-300">
+  <div className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-center hover:shadow-xl transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden">
+    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 text-4xl sm:text-5xl md:text-6xl font-bold text-gray-100 group-hover:text-primary/10 transition-colors duration-300">
       {step}
     </div>
-    <div className={`w-16 h-16 ${iconBg} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}>
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 ${iconBg} rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-300`}>
       {icon}
     </div>
-    <h3 className="text-xl font-bold text-gray-800 mb-3">{title}</h3>
-    <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+    <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-2 sm:mb-3">{title}</h3>
+    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{description}</p>
   </div>
 );
 
 // Success Story Card Component
 const SuccessStoryCard = ({ story }) => (
-  <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-    <div className="relative h-64 overflow-hidden">
+  <div className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
+    <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
       <img
         src={story.image}
         alt={story.names}
@@ -405,16 +405,16 @@ const SuccessStoryCard = ({ story }) => (
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-      <span className="absolute bottom-4 left-4 bg-primary text-white text-xs font-semibold px-4 py-1.5 rounded-full">
+      <span className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 bg-primary text-white text-[10px] sm:text-xs font-semibold px-3 sm:px-4 py-1 sm:py-1.5 rounded-full">
         {story.location}
       </span>
     </div>
-    <div className="p-6">
-      <h3 className="font-bold text-gray-800 text-lg mb-1">{story.names}</h3>
-      <p className="text-primary text-sm font-medium mb-4">MARRIED - {story.date}</p>
+    <div className="p-4 sm:p-5 md:p-6">
+      <h3 className="font-bold text-gray-800 text-base sm:text-lg mb-1">{story.names}</h3>
+      <p className="text-primary text-xs sm:text-sm font-medium mb-3 sm:mb-4">MARRIED - {story.date}</p>
       <div className="relative">
-        <span className="text-primary/30 text-5xl absolute -top-2 -left-2">"</span>
-        <p className="text-gray-600 text-sm italic pl-6 pr-4 leading-relaxed">{story.quote}</p>
+        <span className="text-primary/30 text-3xl sm:text-4xl md:text-5xl absolute -top-1 sm:-top-2 -left-1 sm:-left-2">"</span>
+        <p className="text-gray-600 text-xs sm:text-sm italic pl-4 sm:pl-6 pr-2 sm:pr-4 leading-relaxed">{story.quote}</p>
       </div>
     </div>
   </div>
@@ -422,13 +422,13 @@ const SuccessStoryCard = ({ story }) => (
 
 // Extended Story Card Component
 const ExtendedStoryCard = ({ story }) => (
-  <div className={`flex flex-col ${story.align === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 items-center`}>
+  <div className={`flex flex-col ${story.align === 'right' ? 'md:flex-row-reverse' : 'md:flex-row'} gap-4 sm:gap-6 md:gap-8 items-center`}>
     <div className="w-full md:w-1/2">
-      <div className="relative overflow-hidden rounded-2xl shadow-xl group">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl group">
         <img
           src={story.image}
           alt={story.names}
-          className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-700"
+          className="w-full h-56 sm:h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-700"
           onError={(e) => {
             e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=600&background=1EA826&color=fff`;
           }}
@@ -436,12 +436,12 @@ const ExtendedStoryCard = ({ story }) => (
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
       </div>
     </div>
-    <div className="w-full md:w-1/2">
-      <h3 className="font-bold text-gray-800 text-2xl mb-2">{story.names}</h3>
-      <p className="text-primary font-medium mb-4">{story.info}</p>
-      <div className="flex items-start gap-2">
-        <span className="text-primary/30 text-4xl leading-none">"</span>
-        <p className="text-gray-600 italic leading-relaxed">{story.quote}</p>
+    <div className="w-full md:w-1/2 text-center md:text-left">
+      <h3 className="font-bold text-gray-800 text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2">{story.names}</h3>
+      <p className="text-primary font-medium text-sm sm:text-base mb-3 sm:mb-4">{story.info}</p>
+      <div className="flex items-start gap-2 justify-center md:justify-start">
+        <span className="text-primary/30 text-2xl sm:text-3xl md:text-4xl leading-none">"</span>
+        <p className="text-gray-600 text-sm sm:text-base italic leading-relaxed">{story.quote}</p>
       </div>
     </div>
   </div>
@@ -450,11 +450,11 @@ const ExtendedStoryCard = ({ story }) => (
 // Trust Feature Component
 const TrustFeature = ({ icon, title, subtitle }) => (
   <div className="text-center group">
-    <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-gray-700 group-hover:bg-primary group-hover:text-white transition-all duration-300 group-hover:scale-110">
+    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gray-100 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-3 text-gray-700 group-hover:bg-primary group-hover:text-white transition-all duration-300 group-hover:scale-110">
       {icon}
     </div>
-    <p className="font-semibold text-gray-800 text-sm">{title}</p>
-    <p className="text-gray-500 text-xs">{subtitle}</p>
+    <p className="font-semibold text-gray-800 text-xs sm:text-sm">{title}</p>
+    <p className="text-gray-500 text-[10px] sm:text-xs">{subtitle}</p>
   </div>
 );
 
