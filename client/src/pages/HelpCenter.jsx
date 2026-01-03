@@ -1,10 +1,116 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Search, ChevronDown, ChevronUp, User, Heart, Shield, CreditCard, Settings, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion, useInView, useReducedMotion, AnimatePresence } from 'framer-motion';
+
+/**
+ * ============================================
+ * HELP CENTER PAGE
+ * ============================================
+ *
+ * Scroll-based fade-up animations using Framer Motion
+ * - Hero section with fade-in
+ * - Category sidebar with stagger animation
+ * - FAQ items with scroll-triggered animations
+ * - Smooth accordion animations
+ */
+
+// ============================================
+// ANIMATION VARIANTS
+// ============================================
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+const slideInLeft = {
+  hidden: { opacity: 0, x: -30 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+// ============================================
+// ANIMATED SECTION WRAPPER
+// ============================================
+
+const AnimatedSection = ({ children, className = '', delay = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={{
+        hidden: { opacity: 0, y: 40 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.6,
+            delay,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          },
+        },
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 const HelpCenter = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('getting-started');
+  const prefersReducedMotion = useReducedMotion();
 
   const categories = [
     { id: 'getting-started', name: 'Getting Started', icon: <User size={20} /> },
@@ -139,27 +245,43 @@ const HelpCenter = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary/10 to-primary/5 py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <HelpCircle className="w-16 h-16 text-primary mx-auto mb-6" />
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+          <motion.div
+            className="max-w-4xl mx-auto text-center"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.div variants={scaleIn}>
+              <HelpCircle className="w-16 h-16 text-primary mx-auto mb-6" />
+            </motion.div>
+            <motion.h1
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-gray-800 mb-6"
+            >
               Help Center
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl text-gray-600 mb-8"
+            >
               Find answers to your questions and learn how to make the most of our platform.
-            </p>
+            </motion.p>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto relative">
+            <motion.div
+              variants={fadeInUp}
+              className="max-w-2xl mx-auto relative"
+            >
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
                 placeholder="Search for help..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg"
+                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-lg transition-all duration-200"
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -170,47 +292,72 @@ const HelpCenter = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Categories Sidebar */}
               {!searchQuery && (
-                <div className="lg:col-span-1">
+                <motion.div
+                  className="lg:col-span-1"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={slideInLeft}
+                >
                   <div className="bg-white rounded-xl shadow-md p-4 sticky top-24">
                     <h2 className="font-bold text-gray-800 mb-4">Categories</h2>
-                    <nav className="space-y-2">
-                      {categories.map((category) => (
-                        <button
+                    <motion.nav
+                      className="space-y-2"
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {categories.map((category, index) => (
+                        <CategoryButton
                           key={category.id}
+                          category={category}
+                          active={activeCategory === category.id}
                           onClick={() => setActiveCategory(category.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
-                            activeCategory === category.id
-                              ? 'bg-primary text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {category.icon}
-                          <span className="font-medium">{category.name}</span>
-                        </button>
+                          index={index}
+                        />
                       ))}
-                    </nav>
+                    </motion.nav>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {/* FAQs */}
               <div className={searchQuery ? 'lg:col-span-4' : 'lg:col-span-3'}>
                 {searchQuery && (
-                  <div className="mb-6">
+                  <motion.div
+                    className="mb-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
                     <p className="text-gray-600">
                       Showing {filteredFaqs.length} results for "{searchQuery}"
                     </p>
-                  </div>
+                  </motion.div>
                 )}
 
-                <div className="space-y-4">
+                <motion.div
+                  className="space-y-4"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: '-50px' }}
+                  variants={staggerContainer}
+                >
                   {filteredFaqs.map((faq, index) => (
-                    <FAQItem key={index} question={faq.question} answer={faq.answer} />
+                    <FAQItem
+                      key={index}
+                      question={faq.question}
+                      answer={faq.answer}
+                      index={index}
+                    />
                   ))}
-                </div>
+                </motion.div>
 
                 {filteredFaqs.length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-xl">
+                  <motion.div
+                    className="text-center py-12 bg-white rounded-xl"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
                     <p className="text-gray-600 mb-4">No results found for your search.</p>
                     <button
                       onClick={() => setSearchQuery('')}
@@ -218,7 +365,7 @@ const HelpCenter = () => {
                     >
                       Clear search
                     </button>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </div>
@@ -229,54 +376,142 @@ const HelpCenter = () => {
       {/* Still Need Help Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Still Need Help?</h2>
-          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            Our support team is here to assist you. Don't hesitate to reach out with any questions or concerns.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              to="/contact"
-              className="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-lg transition-colors duration-200"
-            >
-              Contact Us
-            </Link>
-            <a
-              href="https://wa.me/919999999999"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white font-semibold rounded-lg transition-colors duration-200"
-            >
-              Chat on WhatsApp
-            </a>
-          </div>
+          <AnimatedSection>
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">Still Need Help?</h2>
+          </AnimatedSection>
+          <AnimatedSection delay={0.1}>
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+              Our support team is here to assist you. Don't hesitate to reach out with any questions or concerns.
+            </p>
+          </AnimatedSection>
+          <AnimatedSection delay={0.2}>
+            <div className="flex flex-wrap justify-center gap-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                <Link
+                  to="/contact"
+                  className="inline-block px-8 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Contact Us
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                <a
+                  href="https://wa.me/919999999999"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-8 py-3 border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  Chat on WhatsApp
+                </a>
+              </motion.div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
     </div>
   );
 };
 
-const FAQItem = ({ question, answer }) => {
-  const [isOpen, setIsOpen] = useState(false);
+// ============================================
+// CATEGORY BUTTON COMPONENT
+// ============================================
+
+const CategoryButton = ({ category, active, onClick, index }) => {
+  const prefersReducedMotion = useReducedMotion();
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <button
+    <motion.button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+        active
+          ? 'bg-primary text-white'
+          : 'text-gray-700 hover:bg-gray-100'
+      }`}
+      variants={{
+        hidden: { opacity: 0, x: -20 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          transition: {
+            duration: 0.4,
+            delay: index * 0.05,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          },
+        },
+      }}
+      whileHover={prefersReducedMotion ? {} : { x: 4 }}
+      whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+    >
+      {category.icon}
+      <span className="font-medium">{category.name}</span>
+    </motion.button>
+  );
+};
+
+// ============================================
+// FAQ ITEM COMPONENT
+// ============================================
+
+const FAQItem = ({ question, answer, index }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      ref={ref}
+      className="bg-white rounded-xl shadow-md overflow-hidden"
+      initial={prefersReducedMotion ? {} : { opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.08,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      whileHover={prefersReducedMotion ? {} : { scale: 1.01 }}
+    >
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-6 text-left"
+        whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
       >
         <span className="font-semibold text-gray-800 pr-4">{question}</span>
-        {isOpen ? (
-          <ChevronUp className="text-primary flex-shrink-0" size={20} />
-        ) : (
-          <ChevronDown className="text-gray-400 flex-shrink-0" size={20} />
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {isOpen ? (
+            <ChevronUp className="text-primary flex-shrink-0" size={20} />
+          ) : (
+            <ChevronDown className="text-gray-400 flex-shrink-0" size={20} />
+          )}
+        </motion.div>
+      </motion.button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6">
+              <motion.p
+                className="text-gray-600"
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+              >
+                {answer}
+              </motion.p>
+            </div>
+          </motion.div>
         )}
-      </button>
-      {isOpen && (
-        <div className="px-6 pb-6">
-          <p className="text-gray-600">{answer}</p>
-        </div>
-      )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

@@ -1,8 +1,113 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Heart } from 'lucide-react';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
+
+/**
+ * ============================================
+ * SUCCESS STORIES PAGE
+ * ============================================
+ *
+ * Scroll-based fade-up animations using Framer Motion
+ * - Hero section with fade-in
+ * - Filter buttons with stagger animation
+ * - Story cards with scroll-triggered fade-up
+ * - CTA section with fade-in
+ */
+
+// ============================================
+// ANIMATION VARIANTS
+// ============================================
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.6,
+      ease: 'easeOut',
+    },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  },
+};
+
+// ============================================
+// ANIMATED SECTION WRAPPER
+// ============================================
+
+const AnimatedSection = ({ children, className = '', delay = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      variants={{
+        hidden: { opacity: 0, y: 40 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.6,
+            delay,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          },
+        },
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 const SuccessStories = () => {
   const [filter, setFilter] = useState('all');
+  const prefersReducedMotion = useReducedMotion();
 
   const stories = [
     {
@@ -94,126 +199,225 @@ const SuccessStories = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="from-primary/10 to-primary/5 py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <Heart className="w-16 h-16 text-primary mx-auto mb-6" />
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+      <section
+        className="from-primary/10 to-primary/5 py-16 bg-no-repeat bg-center bg-cover relative"
+        style={{ backgroundImage: "url(/images/ss.jpg)" }}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            className="max-w-4xl mx-auto text-center"
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.div variants={scaleIn}>
+              <Heart className="w-16 h-16 text-white mx-auto mb-6" />
+            </motion.div>
+            <motion.h1
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold text-white mb-6"
+            >
               Success Stories
-            </h1>
-            <p className="text-xl text-gray-600">
+            </motion.h1>
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl text-white/90"
+            >
               Real stories of love, trust, and beautiful beginnings. These couples found their perfect match through Siruvapuri Murugan Matrimonial.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
       {/* Filter Section */}
-      <section className="py-8 bg-white border-b">
+      <section className="py-8 bg-white border-b-2 border-b-gray-300">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-4">
+          <motion.div
+            className="flex flex-wrap justify-center gap-4"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+          >
             <FilterButton
               active={filter === 'all'}
               onClick={() => setFilter('all')}
+              delay={0}
             >
               All Stories
             </FilterButton>
             <FilterButton
               active={filter === 'tamil'}
               onClick={() => setFilter('tamil')}
+              delay={0.1}
             >
               Tamil
             </FilterButton>
             <FilterButton
               active={filter === 'south-indian'}
               onClick={() => setFilter('south-indian')}
+              delay={0.2}
             >
               South Indian
             </FilterButton>
             <FilterButton
               active={filter === 'inter-community'}
               onClick={() => setFilter('inter-community')}
+              delay={0.3}
             >
               Inter-Community
             </FilterButton>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Stories Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {filteredStories.map((story) => (
-              <StoryCard key={story.id} story={story} />
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={staggerContainer}
+          >
+            {filteredStories.map((story, index) => (
+              <StoryCard key={story.id} story={story} index={index} />
             ))}
-          </div>
+          </motion.div>
 
           {filteredStories.length === 0 && (
-            <div className="text-center py-12">
+            <motion.div
+              className="text-center py-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
               <p className="text-gray-600 text-lg">No stories found for this category.</p>
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Write Your Own Love Story?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of happy couples who found their perfect match with us.
-          </p>
-          <a
-            href="/register"
-            className="inline-block px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-200"
-          >
-            Register Now - It's Free!
-          </a>
+      <section
+        className="py-16 bg-primary text-white relative overflow-hidden"
+        style={{ backgroundImage: "url('/images/ss11.png')" }}
+      >
+        <div className="absolute inset-0 bg-primary/80" />
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <AnimatedSection>
+            <h2 className="text-3xl font-bold mb-6">Ready to Write Your Own Love Story?</h2>
+          </AnimatedSection>
+          <AnimatedSection delay={0.1}>
+            <p className="text-xl mb-8 opacity-90">
+              Join thousands of happy couples who found their perfect match with us.
+            </p>
+          </AnimatedSection>
+          <AnimatedSection delay={0.2}>
+            <motion.a
+              href="/register"
+              className="inline-block px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Register Now - It's Free!
+            </motion.a>
+          </AnimatedSection>
         </div>
       </section>
     </div>
   );
 };
 
-const FilterButton = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
-      active
-        ? 'bg-primary text-white'
-        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-    }`}
-  >
-    {children}
-  </button>
-);
+// ============================================
+// FILTER BUTTON COMPONENT
+// ============================================
 
-const StoryCard = ({ story }) => (
-  <div className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
-    <div className="relative h-64">
-      <img
-        src={story.image}
-        alt={story.names}
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=00D26A&color=fff`;
-        }}
-      />
-      <span className="absolute bottom-4 left-4 bg-primary text-white text-xs font-semibold px-3 py-1 rounded">
-        {story.location}
-      </span>
-    </div>
-    <div className="p-6">
-      <h3 className="font-bold text-gray-800 text-xl mb-1">{story.names}</h3>
-      <p className="text-primary text-sm font-medium mb-4">Married - {story.date}</p>
-      <div className="relative mb-4">
-        <span className="text-primary text-3xl absolute -top-1 -left-1">"</span>
-        <p className="text-gray-600 text-sm italic pl-5 pr-4">{story.quote}</p>
+const FilterButton = ({ active, onClick, children, delay = 0 }) => {
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.button
+      onClick={onClick}
+      className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${
+        active
+          ? 'bg-primary text-white'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      }`}
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.4,
+            delay,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          },
+        },
+      }}
+      whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+      whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+    >
+      {children}
+    </motion.button>
+  );
+};
+
+// ============================================
+// STORY CARD COMPONENT
+// ============================================
+
+const StoryCard = ({ story, index }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      ref={ref}
+      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
+      initial={prefersReducedMotion ? {} : { opacity: 0, y: 60 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{
+        duration: 0.6,
+        delay: index * 0.1,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
+      whileHover={prefersReducedMotion ? {} : { y: -8 }}
+    >
+      <div className="relative h-64 overflow-hidden">
+        <motion.img
+          src={story.image}
+          alt={story.names}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=00D26A&color=fff`;
+          }}
+          whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
+          transition={{ duration: 0.4 }}
+        />
+        <motion.span
+          className="absolute bottom-4 left-4 bg-primary text-white text-xs font-semibold px-3 py-1 rounded"
+          initial={{ opacity: 0, x: -20 }}
+          animate={isInView ? { opacity: 1, x: 0 } : {}}
+          transition={{ delay: index * 0.1 + 0.3, duration: 0.4 }}
+        >
+          {story.location}
+        </motion.span>
       </div>
-      <p className="text-gray-500 text-sm">{story.details}</p>
-    </div>
-  </div>
-);
+      <div className="p-6">
+        <h3 className="font-bold text-gray-800 text-xl mb-1">{story.names}</h3>
+        <p className="text-primary text-sm font-medium mb-4">Married - {story.date}</p>
+        <div className="relative mb-4">
+          <span className="text-primary text-3xl absolute -top-1 -left-1">"</span>
+          <p className="text-gray-600 text-sm italic pl-5 pr-4">{story.quote}</p>
+        </div>
+        <p className="text-gray-500 text-sm">{story.details}</p>
+      </div>
+    </motion.div>
+  );
+};
 
 export default SuccessStories;

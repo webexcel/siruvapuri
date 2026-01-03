@@ -10,7 +10,13 @@
       "Bash(del Admin.jsx AdminCreateUser.jsx AdminAnalytics.jsx AdminAssignMatch.jsx AdminUserList.jsx AdminEditUser.jsx AdminDashboard.jsx AdminMatches.jsx AdminMembership.jsx AdminSetPassword.jsx AdminAssignMatchNew.jsx AdminLogin.jsx AdminManagePasswords.jsx AdminInterests.jsx AdminAssignMembership.jsx)",
       "Bash(del AdminProtectedRoute.jsx AdminLayout.jsx)",
       "Bash(del adminApi.js)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Docker setup for one-step EC2 deployment with Apache2\n\n- Add Dockerfiles for server, client, and admin\n- Add docker-compose.yml for orchestration\n- Add Apache2 proxy configuration\n- Add one-step deploy.sh script\n- Containers: API (5000), Client (3000), Admin (3001)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nMake entire project mobile responsive\n\n- Add responsive breakpoints (sm:, md:, lg:) to all pages\n- Update Header with smaller logo and text on mobile\n- Update Footer with 2-column grid on mobile\n- Update Home with responsive hero, form, cards\n- Update Dashboard with responsive stats and grids\n- Update ProfileCard with responsive images and buttons\n- Update Interests with responsive tabs and cards\n- Update Recommendations with responsive grid\n- Update Search with responsive form and results\n- Update ProfileView with responsive layout\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(cat:*)"
     ]
   }
 }

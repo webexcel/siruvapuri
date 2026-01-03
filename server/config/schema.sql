@@ -48,10 +48,14 @@ CREATE TABLE users (
 -- ALTER TABLE users ADD COLUMN IF NOT EXISTS membership_type VARCHAR(20) DEFAULT NULL CHECK (membership_type IN ('gold', 'platinum', 'premium'));
 -- ALTER TABLE users ADD COLUMN IF NOT EXISTS membership_expiry DATE DEFAULT NULL;
 
+-- Migration script to add full_name column to profiles table (run if upgrading)
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+
 -- Profiles table
 CREATE TABLE profiles (
   id SERIAL PRIMARY KEY,
   user_id INTEGER UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  full_name VARCHAR(255),
   height INTEGER, -- Height in cm
   weight INTEGER, -- Weight in kg
   marital_status VARCHAR(20) DEFAULT 'never_married' CHECK (marital_status IN ('never_married', 'divorced', 'widowed', 'separated')),

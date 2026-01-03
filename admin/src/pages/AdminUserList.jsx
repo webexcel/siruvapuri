@@ -34,6 +34,7 @@ const AdminUserList = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [actionLoading, setActionLoading] = useState({}); // Track loading state per user/action
+  const [globalLoading, setGlobalLoading] = useState(false); // Block all buttons when any action is in progress
 
   // Helper to set loading for specific user action
   const setUserActionLoading = (userId, action, isLoading) => {
@@ -41,10 +42,16 @@ const AdminUserList = () => {
       ...prev,
       [`${userId}-${action}`]: isLoading
     }));
+    setGlobalLoading(isLoading); // Block all other buttons
   };
 
   const isActionLoading = (userId, action) => {
     return actionLoading[`${userId}-${action}`] || false;
+  };
+
+  // Check if any action is currently loading (to disable other buttons)
+  const isAnyActionLoading = () => {
+    return globalLoading;
   };
 
   useEffect(() => {
@@ -339,15 +346,16 @@ const AdminUserList = () => {
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => navigate(`/users/${user.id}/edit`)}
-                    className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                    disabled={isAnyActionLoading()}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <UserCog size={16} />
                     Edit Full Profile
                   </button>
                   <button
                     onClick={() => handleApprovalToggle(user.id, user.is_approved)}
-                    disabled={isActionLoading(user.id, 'approval')}
-                    className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                    disabled={isAnyActionLoading()}
+                    className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       user.is_approved
                         ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                         : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
@@ -362,8 +370,8 @@ const AdminUserList = () => {
                   </button>
                   <button
                     onClick={() => handlePaymentToggle(user.id, user.payment_status)}
-                    disabled={isActionLoading(user.id, 'payment')}
-                    className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                    disabled={isAnyActionLoading()}
+                    className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       user.payment_status === 'paid'
                         ? 'bg-green-50 text-green-600 hover:bg-green-100'
                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -378,8 +386,8 @@ const AdminUserList = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteUser(user.id, `${user.first_name} ${user.last_name}`)}
-                    disabled={isActionLoading(user.id, 'delete')}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                    disabled={isAnyActionLoading()}
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isActionLoading(user.id, 'delete') ? (
                       <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
@@ -586,8 +594,8 @@ const AdminUserList = () => {
                             <>
                               <button
                                 onClick={() => handleEditSubmit(user.id)}
-                                disabled={isActionLoading(user.id, 'edit')}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
+                                disabled={isAnyActionLoading()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {isActionLoading(user.id, 'edit') ? (
                                   <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
@@ -598,7 +606,8 @@ const AdminUserList = () => {
                               </button>
                               <button
                                 onClick={cancelEditing}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+                                disabled={isAnyActionLoading()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <XIcon size={16} />
                                 Cancel
@@ -608,22 +617,24 @@ const AdminUserList = () => {
                             <>
                               <button
                                 onClick={() => navigate(`/users/${user.id}/edit`)}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors"
+                                disabled={isAnyActionLoading()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <UserCog size={16} />
                                 Full Edit
                               </button>
                               <button
                                 onClick={() => startEditing(user)}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                disabled={isAnyActionLoading()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Edit size={16} />
                                 Quick Edit
                               </button>
                               <button
                                 onClick={() => handleApprovalToggle(user.id, user.is_approved)}
-                                disabled={isActionLoading(user.id, 'approval')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                                disabled={isAnyActionLoading()}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                   user.is_approved
                                     ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
                                     : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
@@ -638,8 +649,8 @@ const AdminUserList = () => {
                               </button>
                               <button
                                 onClick={() => handlePaymentToggle(user.id, user.payment_status)}
-                                disabled={isActionLoading(user.id, 'payment')}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                                disabled={isAnyActionLoading()}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                                   user.payment_status === 'paid'
                                     ? 'bg-green-50 text-green-600 hover:bg-green-100'
                                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
@@ -654,8 +665,8 @@ const AdminUserList = () => {
                               </button>
                               <button
                                 onClick={() => handleDeleteUser(user.id, `${user.first_name} ${user.last_name}`)}
-                                disabled={isActionLoading(user.id, 'delete')}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                                disabled={isAnyActionLoading()}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {isActionLoading(user.id, 'delete') ? (
                                   <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>

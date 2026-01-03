@@ -1,7 +1,241 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
+import { User, Mail, Phone, Calendar, Users, Shield, Lock } from 'lucide-react';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+} from 'framer-motion';
+
+/**
+ * ============================================
+ * REGISTER PAGE - SIRUVAPURI MATRIMONIAL
+ * ============================================
+ *
+ * PARALLAX ANIMATION STRATEGY:
+ * ---------------------------
+ * This component uses scroll-based parallax with layered depth:
+ *
+ * Layer speeds (relative to scroll):
+ * - Background layer: 0.1x - 0.2x (slowest, creates depth)
+ * - Decorative elements: 0.3x - 0.4x (mid-depth accents)
+ * - Content layer: 0.6x - 0.8x (foreground, near-natural)
+ *
+ * MOBILE PERFORMANCE OPTIMIZATIONS:
+ * - Uses only GPU-friendly properties: transform, opacity
+ * - will-change hint for compositor optimization
+ * - Respects prefers-reduced-motion for accessibility
+ * - No heavy 3D transforms or WebGL
+ * - Lightweight SVG decorations instead of images
+ */
+
+// ============================================
+// DECORATIVE SVG COMPONENTS
+// ============================================
+
+/**
+ * Traditional South Indian Kolam/Rangoli pattern
+ * Lightweight SVG - perfect for mobile parallax
+ */
+const KolamPattern = ({ className = "", size = 100 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    className={className}
+    aria-hidden="true"
+  >
+    <circle cx="50" cy="50" r="3" fill="currentColor" opacity="0.6" />
+    <circle cx="50" cy="50" r="15" stroke="currentColor" strokeWidth="1" opacity="0.4" fill="none" />
+    <circle cx="50" cy="50" r="25" stroke="currentColor" strokeWidth="0.5" opacity="0.3" fill="none" />
+    <circle cx="50" cy="50" r="35" stroke="currentColor" strokeWidth="0.5" opacity="0.2" fill="none" />
+    {/* Petal shapes */}
+    {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+      <ellipse
+        key={angle}
+        cx="50"
+        cy="25"
+        rx="4"
+        ry="8"
+        fill="currentColor"
+        opacity="0.3"
+        transform={`rotate(${angle} 50 50)`}
+      />
+    ))}
+  </svg>
+);
+
+/**
+ * Traditional Mango Paisley motif
+ * Common in South Indian wedding decorations
+ */
+const PaisleyMotif = ({ className = "", size = 80 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 80 80"
+    fill="none"
+    className={className}
+    aria-hidden="true"
+  >
+    <path
+      d="M40 10 C60 10, 70 30, 70 50 C70 70, 50 75, 40 70 C30 65, 20 50, 20 35 C20 20, 30 10, 40 10"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+      opacity="0.4"
+    />
+    <circle cx="40" cy="40" r="3" fill="currentColor" opacity="0.5" />
+    <path
+      d="M40 25 C45 25, 50 30, 50 40 C50 50, 45 55, 40 55"
+      stroke="currentColor"
+      strokeWidth="1"
+      fill="none"
+      opacity="0.3"
+    />
+  </svg>
+);
+
+/**
+ * Jasmine flower garland element
+ * Represents the maalai shown in the screenshot
+ */
+const JasmineFlower = ({ className = "", size = 24 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.8" />
+    {[0, 60, 120, 180, 240, 300].map((angle) => (
+      <ellipse
+        key={angle}
+        cx="12"
+        cy="6"
+        rx="2.5"
+        ry="4"
+        fill="currentColor"
+        opacity="0.6"
+        transform={`rotate(${angle} 12 12)`}
+      />
+    ))}
+  </svg>
+);
+
+/**
+ * Lotus flower - sacred symbol in Hindu weddings
+ */
+const LotusFlower = ({ className = "", size = 60 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 60 60"
+    fill="none"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Outer petals */}
+    {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => (
+      <ellipse
+        key={`outer-${angle}`}
+        cx="30"
+        cy="12"
+        rx="5"
+        ry="12"
+        fill="currentColor"
+        opacity="0.3"
+        transform={`rotate(${angle} 30 30)`}
+      />
+    ))}
+    {/* Inner petals */}
+    {[15, 75, 135, 195, 255, 315].map((angle) => (
+      <ellipse
+        key={`inner-${angle}`}
+        cx="30"
+        cy="18"
+        rx="4"
+        ry="9"
+        fill="currentColor"
+        opacity="0.5"
+        transform={`rotate(${angle} 30 30)`}
+      />
+    ))}
+    {/* Center */}
+    <circle cx="30" cy="30" r="6" fill="currentColor" opacity="0.7" />
+  </svg>
+);
+
+// ============================================
+// PARALLAX LAYER COMPONENT
+// ============================================
+
+/**
+ * ParallaxLayer - Reusable parallax wrapper
+ */
+const ParallaxLayer = ({
+  children,
+  speed = 0.5,
+  direction = "vertical",
+  className = "",
+  style = {},
+}) => {
+  const ref = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  const yTransform = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [100 * speed, -100 * speed]
+  );
+
+  const xTransform = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [50 * speed, -50 * speed]
+  );
+
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.6, 1, 1, 0.6]);
+
+  if (prefersReducedMotion) {
+    return (
+      <div ref={ref} className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      style={{
+        y: direction === "vertical" || direction === "both" ? yTransform : 0,
+        x: direction === "horizontal" || direction === "both" ? xTransform : 0,
+        opacity,
+        willChange: "transform, opacity",
+        ...style,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// ============================================
+// MAIN REGISTER COMPONENT
+// ============================================
 
 const Register = () => {
   const location = useLocation();
@@ -16,22 +250,30 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const navigate = useNavigate();
 
+  // Container ref for scroll-based animations
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end'],
+  });
+
+  // Parallax transforms for different layers
+  const bgParallaxY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const midParallaxY = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const contentParallaxY = useTransform(scrollYProgress, [0, 1], [0, -30]);
+
   // Pre-fill form with quick registration data if available
   useEffect(() => {
-    // Check for data passed via navigation state
     const quickData = location.state?.quickData;
-
-    // Also check localStorage as fallback
     const storedData = localStorage.getItem('quickRegisterData');
     const parsedStoredData = storedData ? JSON.parse(storedData) : null;
-
     const data = quickData || parsedStoredData;
 
     if (data) {
-      // Parse the name into first and last name
       const nameParts = (data.name || '').trim().split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -45,7 +287,6 @@ const Register = () => {
         gender: data.gender || '',
       }));
 
-      // Clear localStorage after using the data
       localStorage.removeItem('quickRegisterData');
     }
   }, [location.state]);
@@ -73,7 +314,11 @@ const Register = () => {
         navigate('/');
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Registration failed. Please try again.';
+      // Handle different error response formats
+      const errorMsg = err.response?.data?.error ||
+                       err.response?.data?.message ||
+                       (err.response?.data?.errors && err.response?.data?.errors[0]?.msg) ||
+                       'Registration failed. Please try again.';
       setError(errorMsg);
       showError(errorMsg);
     } finally {
@@ -81,174 +326,462 @@ const Register = () => {
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 py-12 px-4">
-      <div className="max-w-2xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            Create Your Profile
-          </h1>
-          <p className="text-gray-600">Join us to find your perfect life partner</p>
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 relative overflow-hidden"
+    >
+      {/* ============================================
+          BACKGROUND PARALLAX LAYER (Slowest - 0.15x)
+          ============================================ */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ y: prefersReducedMotion ? 0 : bgParallaxY }}
+      >
+        {/* Top-left Kolam pattern */}
+        <div className="absolute -top-10 -left-10 text-primary/10">
+          <KolamPattern size={200} />
         </div>
 
-        <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+        {/* Bottom-right Lotus */}
+        <div className="absolute bottom-20 right-10 text-primary/10 hidden md:block">
+          <LotusFlower size={120} />
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name *
-                </label>
-                <input
-                  type="text"
-                  id="first_name"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="First name"
-                  required
-                />
-              </div>
+        {/* Scattered Jasmine flowers */}
+        <div className="absolute top-1/4 right-1/4 text-primary/15">
+          <JasmineFlower size={32} />
+        </div>
+        <div className="absolute top-1/2 left-10 text-primary/10 hidden sm:block">
+          <JasmineFlower size={24} />
+        </div>
+      </motion.div>
 
-              <div>
-                <label htmlFor="middle_name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Middle Name
-                </label>
-                <input
-                  type="text"
-                  id="middle_name"
-                  name="middle_name"
-                  value={formData.middle_name}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="Middle name (optional)"
-                />
-              </div>
+      {/* ============================================
+          MID-LAYER PARALLAX (Medium - 0.3x)
+          ============================================ */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ y: prefersReducedMotion ? 0 : midParallaxY }}
+      >
+        {/* Paisley motifs */}
+        <div className="absolute top-1/3 -left-5 text-primary/15 rotate-45">
+          <PaisleyMotif size={100} />
+        </div>
+        <div className="absolute bottom-1/4 right-5 text-primary/10 -rotate-12 hidden lg:block">
+          <PaisleyMotif size={80} />
+        </div>
 
-              <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  id="last_name"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="Last name"
-                  required
-                />
-              </div>
+        {/* Additional Kolam */}
+        <div className="absolute bottom-10 left-1/4 text-primary/8 hidden md:block">
+          <KolamPattern size={150} />
+        </div>
+      </motion.div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="your.email@example.com"
-                  required
-                />
-              </div>
+      {/* ============================================
+          MAIN CONTENT LAYER
+          ============================================ */}
+      <motion.div
+        className="relative z-10 min-h-screen flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8"
+        style={{ y: prefersReducedMotion ? 0 : contentParallaxY }}
+      >
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-stretch gap-0 bg-white rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden">
 
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="9876543210"
-                  required
-                />
-              </div>
+            {/* ============================================
+                LEFT PANEL - Hero Image
+                ============================================ */}
+            <div className="relative lg:w-5/12 min-h-[280px] sm:min-h-[350px] lg:min-h-[700px] overflow-hidden">
+              {/* Background Image */}
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url('/images/register.jpg')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
 
-              <div>
-                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-2">
-                  Age *
-                </label>
-                <input
-                  type="number"
-                  id="age"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="Age"
-                  min="18"
-                  max="100"
-                  required
-                />
-              </div>
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
 
-              <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                  Gender *
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="input-field"
-                  required
+              {/* Parallax floating decorations */}
+              <ParallaxLayer
+                speed={0.2}
+                direction="vertical"
+                className="absolute inset-0 pointer-events-none"
+              >
+                <div className="absolute top-10 left-10 text-white/20">
+                  <KolamPattern size={60} />
+                </div>
+                <div className="absolute bottom-20 right-8 text-white/15 hidden sm:block">
+                  <LotusFlower size={50} />
+                </div>
+              </ParallaxLayer>
+
+              {/* Content overlay */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 lg:p-10">
+                {/* Heart icon badge */}
+                <ParallaxLayer speed={0.3} direction="vertical">
+                  <motion.div
+                    className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 sm:mb-6"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' }}
+                  >
+                    <svg
+                      className="w-6 h-6 sm:w-7 sm:h-7 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </motion.div>
+                </ParallaxLayer>
+
+                {/* Main heading */}
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
                 >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
+                  <motion.h1
+                    variants={itemVariants}
+                    className="text-2xl sm:text-3xl lg:text-4xl font-serif text-white leading-tight mb-3 sm:mb-4"
+                  >
+                    Start your sacred journey today.
+                  </motion.h1>
+
+                  <motion.p
+                    variants={itemVariants}
+                    className="text-white/80 text-sm sm:text-base lg:text-lg mb-4 max-w-md"
+                  >
+                    Join thousands of families who found their perfect match through our trusted platform.
+                  </motion.p>
+                </motion.div>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
-              Note: Admin will create your password after approval. You'll be notified via email.
+            {/* ============================================
+                RIGHT PANEL - Registration Form
+                ============================================ */}
+            <div className="lg:w-7/12 p-6 sm:p-8 lg:p-10 xl:p-12 flex flex-col justify-center overflow-y-auto">
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="w-full"
+              >
+                {/* Header */}
+                <motion.div variants={itemVariants} className="mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+                    Create Your Profile
+                  </h2>
+                  <p className="text-gray-500 text-sm sm:text-base">
+                    Join us to find your perfect life partner with confidence.
+                  </p>
+                </motion.div>
+
+                {/* Error Message */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-4"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                {/* Registration Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Name Fields Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <motion.div variants={itemVariants}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name *
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          name="first_name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                          placeholder="First name"
+                          required
+                        />
+                      </div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name *
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          name="last_name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                          placeholder="Last name"
+                          required
+                        />
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Middle Name - Optional */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Middle Name <span className="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        name="middle_name"
+                        value={formData.middle_name}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                        placeholder="Middle name"
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Email Field */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                        placeholder="your.email@example.com"
+                        required
+                      />
+                    </div>
+                  </motion.div>
+
+                  {/* Phone and Age Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <motion.div variants={itemVariants}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <Phone className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                          placeholder="9876543210"
+                          required
+                        />
+                      </div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Age *
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <Calendar className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="age"
+                          value={formData.age}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                          placeholder="Age"
+                          min="18"
+                          max="100"
+                          required
+                        />
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Gender Field */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Gender *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Users className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <select
+                        name="gender"
+                        value={formData.gender}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base bg-white appearance-none cursor-pointer"
+                        required
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Info Note */}
+                  <motion.div
+                    variants={itemVariants}
+                    className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3"
+                  >
+                    <Lock className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <span>Admin will create your password after approval. You'll be notified via email.</span>
+                  </motion.div>
+
+                  {/* Submit Button */}
+                  <motion.div variants={itemVariants}>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full cursor-pointer bg-primary hover:bg-primary-dark text-white font-semibold py-3 sm:py-3.5 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2 text-sm sm:text-base"
+                    >
+                      {loading ? (
+                        <>
+                          <svg
+                            className="animate-spin h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          Register
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M14 5l7 7m0 0l-7 7m7-7H3"
+                            />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </motion.div>
+                </form>
+
+                {/* Login Link */}
+                <motion.p
+                  variants={itemVariants}
+                  className="text-center text-gray-600 text-sm sm:text-base mt-6"
+                >
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="text-primary font-semibold hover:text-primary-dark transition-colors"
+                  >
+                    Sign in here
+                  </Link>
+                </motion.p>
+
+                {/* Trust Badges */}
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-center justify-center gap-4 sm:gap-6 mt-6 pt-6 border-t border-gray-100"
+                >
+                  <div className="flex items-center gap-1.5 text-gray-500 text-xs sm:text-sm">
+                    <Lock className="w-4 h-4" />
+                    <span>Secure Registration</span>
+                  </div>
+                  <div className="w-1 h-1 bg-gray-300 rounded-full" />
+                  <div className="flex items-center gap-1.5 text-gray-500 text-xs sm:text-sm">
+                    <Shield className="w-4 h-4" />
+                    <span>Privacy Protected</span>
+                  </div>
+                </motion.div>
+
+                {/* Terms & Privacy */}
+                <motion.p
+                  variants={itemVariants}
+                  className="text-center text-xs text-gray-400 mt-4"
+                >
+                  By creating an account, you agree to our{' '}
+                  <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                </motion.p>
+              </motion.div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Submitting Registration...' : 'Register'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary font-semibold hover:text-primary-dark">
-                Sign in here
-              </Link>
-            </p>
           </div>
         </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-500">
-            By creating an account, you agree to our{' '}
-            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-            {' '}and{' '}
-            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-          </p>
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

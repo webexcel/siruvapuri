@@ -70,11 +70,11 @@ const Footer = () => {
                   Success Stories
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/contact" className="text-gray-400 hover:text-white hover:pl-2 transition-all duration-300 inline-block">
                   Careers
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="/contact" className="text-gray-400 hover:text-white hover:pl-2 transition-all duration-300 inline-block">
                   Contact

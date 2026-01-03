@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
+import PageTransition from './components/PageTransition';
 
 // Pages
 import Home from './pages/Home';
@@ -32,11 +34,13 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <ScrollToTop />
         <div className="flex flex-col min-h-screen">
           <Toaster />
           <Header />
           <main className="flex-grow">
-            <Routes>
+            <PageTransition>
+              <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -108,7 +112,8 @@ function App() {
               />
 
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+              </Routes>
+            </PageTransition>
           </main>
           <Footer />
         </div>
