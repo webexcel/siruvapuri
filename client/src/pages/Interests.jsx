@@ -2,6 +2,30 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { matchAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
+import { Crown, Star, Award } from 'lucide-react';
+
+// Membership Badge Component
+const MembershipBadge = ({ membershipType, isActive }) => {
+  if (!membershipType || !isActive) return null;
+
+  const badges = {
+    gold: { icon: Award, color: 'bg-yellow-500', label: 'Gold' },
+    platinum: { icon: Star, color: 'bg-gray-400', label: 'Platinum' },
+    premium: { icon: Crown, color: 'bg-purple-500', label: 'Premium' }
+  };
+
+  const badge = badges[membershipType];
+  if (!badge) return null;
+
+  const Icon = badge.icon;
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] rounded-full font-semibold ${badge.color} text-white`}>
+      <Icon size={10} />
+      {badge.label}
+    </span>
+  );
+};
 
 const InterestsSkeleton = () => (
   <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -102,12 +126,18 @@ const Interests = () => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <Link
-                to={`/profile/${type === 'received' ? interest.sender_id : interest.receiver_id}`}
-                className="text-sm sm:text-base md:text-lg font-bold text-gray-800 hover:text-primary block truncate"
-              >
-                {interest.full_name}
-              </Link>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link
+                  to={`/profile/${type === 'received' ? interest.sender_id : interest.receiver_id}`}
+                  className="text-sm sm:text-base md:text-lg font-bold text-gray-800 hover:text-primary"
+                >
+                  {interest.full_name}
+                </Link>
+                <MembershipBadge
+                  membershipType={interest.membership_type}
+                  isActive={interest.is_membership_active}
+                />
+              </div>
               <p className="text-xs sm:text-sm text-gray-600 truncate">
                 {interest.age} yrs • {interest.city || 'Location N/A'}
               </p>

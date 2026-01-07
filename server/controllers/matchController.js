@@ -120,6 +120,11 @@ const getDailyRecommendations = async (req, res) => {
         u.gender,
         u.age,
         u.membership_type,
+        u.membership_expiry,
+        CASE
+          WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
+          ELSE false
+        END as is_membership_active,
         p.height,
         p.weight,
         p.marital_status,
@@ -189,6 +194,10 @@ const searchProfiles = async (req, res) => {
       SELECT u.id,
              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
              u.gender, u.age, u.membership_type,
+             CASE
+               WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
+               ELSE false
+             END as is_membership_active,
              p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
              p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
              p.about_me, p.profile_picture, p.looking_for, p.hobbies
@@ -376,7 +385,8 @@ const getReceivedInterests = async (req, res) => {
     const result = await db.query(
       `SELECT i.id, i.sender_id, i.status, i.message, i.created_at,
               u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
-              u.gender, u.age,
+              u.gender, u.age, u.membership_type,
+              CASE WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true ELSE false END as is_membership_active,
               p.city, p.education, p.occupation, p.profile_picture
        FROM interests i
        INNER JOIN users u ON i.sender_id = u.id
@@ -401,7 +411,8 @@ const getSentInterests = async (req, res) => {
     const result = await db.query(
       `SELECT i.id, i.receiver_id, i.status, i.message, i.created_at,
               u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
-              u.gender, u.age,
+              u.gender, u.age, u.membership_type,
+              CASE WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true ELSE false END as is_membership_active,
               p.city, p.education, p.occupation, p.profile_picture
        FROM interests i
        INNER JOIN users u ON i.receiver_id = u.id

@@ -113,6 +113,11 @@ const getCurrentUser = async (req, res) => {
               u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
               u.first_name, u.middle_name, u.last_name,
               u.phone, u.gender, u.age, u.created_at,
+              u.membership_type, u.membership_expiry,
+              CASE
+                WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
+                ELSE false
+              END as is_membership_active,
               p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
               p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies, p.created_by

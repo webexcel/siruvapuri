@@ -1,18 +1,21 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../utils/api';
 import { User, Search, Heart, Phone, Shield, Users, Flag, Settings } from 'lucide-react';
 import { AnimateOnScroll } from '../hooks/useScrollAnimation.jsx';
+import Swal from 'sweetalert2';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     gender: '',
     email: '',
-    mobile: ''
+    phone: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,11 +24,42 @@ const Home = () => {
     });
   };
 
-  const handleQuickRegister = (e) => {
+  const handleQuickRegister = async (e) => {
     e.preventDefault();
-    // Store quick registration data and redirect to full registration
-    localStorage.setItem('quickRegisterData', JSON.stringify(formData));
-    navigate('/register', { state: { quickData: formData } });
+    setLoading(true);
+
+    try {
+      const response = await authAPI.register(formData);
+
+      if (response.data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: 'Please wait for admin approval. You will receive your password via email.',
+          confirmButtonColor: '#00D26A',
+        });
+        // Reset form
+        setFormData({
+          first_name: '',
+          last_name: '',
+          gender: '',
+          email: '',
+          phone: ''
+        });
+      }
+    } catch (err) {
+      const errorMsg = err.response?.data?.error ||
+                       err.response?.data?.message ||
+                       'Registration failed. Please try again.';
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: errorMsg,
+        confirmButtonColor: '#ef4444',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const successStories = [
@@ -83,7 +117,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section with Wedding Image Background */}
       <section
         className="relative min-h-[400px] sm:min-h-[500px] md:min-h-[600px] bg-cover bg-center bg-no-repeat"
@@ -95,7 +129,7 @@ const Home = () => {
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30 sm:from-black/60 sm:to-black/30"></div>
 
-        <div className="relative container mx-auto px-3 sm:px-4 py-8 sm:py-12 md:py-16">
+        <div className="relative container mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16">
           <AnimateOnScroll animation="fade-up" duration={800}>
             <div className="max-w-2xl">
               <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-serif italic text-white mb-3 sm:mb-4 mt-12 sm:mt-20 md:mt-28 leading-tight">
@@ -110,77 +144,89 @@ const Home = () => {
 
         {/* Quick Registration Form */}
         {!isAuthenticated && (
-          <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-48 sm:-bottom-32 md:-bottom-24 w-full max-w-5xl px-3 sm:px-4">
+          <div className="absolute left-0 right-0 mx-auto -bottom-52 sm:-bottom-36 md:-bottom-24 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-4xl px-0">
             <AnimateOnScroll animation="fade-up" delay={200} duration={800}>
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 border border-gray-100">
-                <h2 className="text-center text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center justify-center gap-1 sm:gap-2">
-                  <span className="text-lg sm:text-2xl">🤝</span>
+              <div className="bg-white rounded-xl shadow-2xl p-3 sm:p-4 border border-gray-100">
+                <h2 className="text-center text-sm sm:text-base font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center justify-center gap-1">
+                  <span className="text-base">🤝</span>
                   Quick Registration
-                  <span className="text-lg sm:text-2xl">🤝</span>
+                  <span className="text-base">🤝</span>
                 </h2>
 
-                <form onSubmit={handleQuickRegister} className="flex flex-col md:flex-row gap-3 sm:gap-4 items-end">
-                  <div className="flex-1 w-full">
+                <form onSubmit={handleQuickRegister}>
+                  {/* All fields in responsive grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
                     <input
                       type="text"
-                      name="name"
-                      placeholder="Your Name"
-                      value={formData.name}
+                      name="first_name"
+                      placeholder="First Name *"
+                      value={formData.first_name}
                       onChange={handleChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                      className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                     />
-                  </div>
-
-                  <div className="flex-1 w-full">
+                    <input
+                      type="text"
+                      name="last_name"
+                      placeholder="Last Name *"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      required
+                    />
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white transition-all duration-300"
+                      className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
                       required
                     >
-                      <option value="">Gender</option>
+                      <option value="">Gender *</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                     </select>
-                  </div>
-
-                  <div className="flex-1 w-full">
                     <input
                       type="email"
                       name="email"
-                      placeholder="email@example.com"
+                      placeholder="Email *"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                      className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                     />
-                  </div>
-
-                  <div className="flex-1 w-full">
                     <div className="flex">
-                      <span className="px-2 sm:px-3 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg sm:rounded-l-xl text-gray-600">
+                      <span className="px-2 py-2 text-sm bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600">
                         +91
                       </span>
                       <input
                         type="tel"
-                        name="mobile"
-                        placeholder="Mobile Number"
-                        value={formData.mobile}
+                        name="phone"
+                        placeholder="Mobile *"
+                        value={formData.phone}
                         onChange={handleChange}
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-r-lg sm:rounded-r-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-300"
+                        className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                       />
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full md:w-auto px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-primary to-green-500 hover:from-green-500 hover:to-primary text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5"
-                  >
-                    CONTINUE
-                  </button>
+                  {/* Submit Button */}
+                  <div className="flex justify-center">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full sm:w-auto px-6 py-2 text-sm bg-gradient-to-r from-primary to-green-500 hover:from-green-500 hover:to-primary text-white font-semibold rounded-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Registering...
+                        </>
+                      ) : (
+                        'REGISTER NOW'
+                      )}
+                    </button>
+                  </div>
                 </form>
               </div>
             </AnimateOnScroll>
@@ -189,11 +235,11 @@ const Home = () => {
       </section>
 
       {/* Spacer for registration form */}
-      {!isAuthenticated && <div className="h-56 sm:h-40 md:h-32"></div>}
+      {!isAuthenticated && <div className="h-56 sm:h-40 md:h-28"></div>}
 
       {/* Three Steps Section */}
       <section className="py-10 sm:py-16 md:py-20 bg-white">
-        <div className="container mx-auto px-3 sm:px-4">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
           <AnimateOnScroll animation="fade-up">
             <div className="flex items-center justify-center mb-6 sm:mb-8 md:mb-12">
               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
@@ -243,7 +289,7 @@ const Home = () => {
 
       {/* Blessed Matches Section */}
       <section className="py-10 sm:py-16 md:py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-3 sm:px-4">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
           <AnimateOnScroll animation="fade-up">
             <div className="flex items-center justify-center mb-4 sm:mb-6">
               <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-12 sm:w-24"></div>
@@ -302,7 +348,7 @@ const Home = () => {
 
       {/* Safety & Trust Section */}
       <section className="py-10 sm:py-16 md:py-20 bg-white">
-        <div className="container mx-auto px-3 sm:px-4">
+        <div className="container mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8 lg:gap-12">
             {/* Left Content */}
             <AnimateOnScroll animation="fade-right" className="lg:w-1/3 text-center lg:text-left">

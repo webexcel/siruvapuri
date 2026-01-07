@@ -252,7 +252,7 @@ const Search = () => {
               <div className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-600">
                 Found {results.length} profiles
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
                 {results.map((profile) => (
                   <ProfileCard
                     key={profile.id}

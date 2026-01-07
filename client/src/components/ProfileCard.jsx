@@ -1,5 +1,29 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Crown, Star, Award, Check, Heart } from 'lucide-react';
+
+// Membership Badge Component
+const MembershipBadge = ({ membershipType, isActive }) => {
+  if (!membershipType || !isActive) return null;
+
+  const badges = {
+    gold: { icon: Award, color: 'bg-yellow-500', label: 'Gold' },
+    platinum: { icon: Star, color: 'bg-gray-400', label: 'Platinum' },
+    premium: { icon: Crown, color: 'bg-purple-500', label: 'Premium' }
+  };
+
+  const badge = badges[membershipType?.toLowerCase()];
+  if (!badge) return null;
+
+  const Icon = badge.icon;
+
+  return (
+    <div className={`${badge.color} text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md flex items-center gap-0.5 sm:gap-1`}>
+      <Icon size={12} />
+      <span className="hidden sm:inline">{badge.label}</span>
+    </div>
+  );
+};
 
 const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
   const navigate = useNavigate();
@@ -43,134 +67,95 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
     return 'text-orange-600';
   };
 
-  const getMembershipBadge = (membershipType) => {
-    if (!membershipType) return null;
-
-    const badges = {
-      gold: {
-        bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600',
-        text: 'Gold',
-        icon: '👑'
-      },
-      platinum: {
-        bg: 'bg-gradient-to-r from-gray-300 to-gray-500',
-        text: 'Platinum',
-        icon: '💎'
-      },
-      premium: {
-        bg: 'bg-gradient-to-r from-purple-400 to-purple-600',
-        text: 'Premium',
-        icon: '⭐'
-      }
-    };
-
-    return badges[membershipType.toLowerCase()] || null;
-  };
-
-  const membershipBadge = getMembershipBadge(profile.membership_type);
-
   return (
-    <div className="card p-3 sm:p-4 md:p-6 hover:scale-[1.02] sm:hover:scale-105 transition-transform duration-200">
+    <div className="card p-2 sm:p-3 hover:shadow-lg transition-shadow duration-200">
       <div className="relative">
         <img
           src={profile.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`}
           alt={profile.full_name}
-          className="w-full h-48 sm:h-56 md:h-64 object-cover rounded-lg mb-3 sm:mb-4"
+          className="w-full h-40 sm:h-48 md:h-52 object-cover rounded-lg mb-2 sm:mb-3"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`;
           }}
         />
         {showMatchScore && profile.match_score !== undefined && (
-          <div className="absolute top-2 right-2 bg-white rounded-full px-2 sm:px-3 py-1 shadow-md">
-            <span className={`font-bold text-sm sm:text-lg ${getMatchScoreColor(profile.match_score)}`}>
+          <div className="absolute top-1.5 right-1.5 bg-white rounded-full px-1.5 sm:px-2 py-0.5 shadow-md">
+            <span className={`font-bold text-xs sm:text-sm ${getMatchScoreColor(profile.match_score)}`}>
               {profile.match_score}%
             </span>
-            <span className="text-[10px] sm:text-xs text-gray-600 ml-1">Match</span>
           </div>
         )}
-        {membershipBadge && (
-          <div className={`absolute top-2 left-2 ${membershipBadge.bg} text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md flex items-center gap-0.5 sm:gap-1`}>
-            <span>{membershipBadge.icon}</span>
-            <span className="hidden sm:inline">{membershipBadge.text}</span>
+        {profile.membership_type && profile.is_membership_active && (
+          <div className="absolute top-1.5 left-1.5">
+            <MembershipBadge
+              membershipType={profile.membership_type}
+              isActive={profile.is_membership_active}
+            />
           </div>
         )}
       </div>
 
-      <div className="space-y-1 sm:space-y-2">
-        <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 truncate">{profile.full_name}</h3>
+      <div className="space-y-1">
+        <h3 className="text-sm sm:text-base font-bold text-gray-800 truncate">{profile.full_name}</h3>
 
-        <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
+        <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-xs text-gray-600">
           <span>{profile.age || calculateAge(profile.date_of_birth)} yrs</span>
           {profile.height && (
             <>
               <span className="text-gray-300">•</span>
-              <span>{profile.height} cm</span>
+              <span>{profile.height}cm</span>
             </>
           )}
           {profile.city && (
             <>
               <span className="text-gray-300">•</span>
-              <span className="truncate max-w-[80px] sm:max-w-none">{profile.city}</span>
+              <span className="truncate max-w-[60px] sm:max-w-[80px]">{profile.city}</span>
             </>
           )}
         </div>
 
-        <div className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
+        <div className="text-[10px] sm:text-xs text-gray-600 space-y-0.5">
           {profile.education && (
-            <p className="text-gray-700 truncate">
-              <span className="font-semibold">Education:</span> {profile.education}
-            </p>
+            <p className="truncate">{profile.education}</p>
           )}
           {profile.occupation && (
-            <p className="text-gray-700 truncate">
-              <span className="font-semibold">Occupation:</span> {profile.occupation}
-            </p>
+            <p className="truncate">{profile.occupation}</p>
           )}
           {profile.religion && (
-            <p className="text-gray-700">
-              <span className="font-semibold">Religion:</span> {profile.religion}
-            </p>
+            <p>{profile.religion}{profile.caste ? ` • ${profile.caste}` : ''}</p>
           )}
         </div>
 
-        {profile.about_me && (
-          <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 mt-1 sm:mt-2">
-            {profile.about_me}
-          </p>
-        )}
-
-        <div className="flex gap-2 sm:gap-3 pt-2 sm:pt-4">
+        <div className="flex gap-1.5 sm:gap-2 pt-1.5 sm:pt-2">
           <button
             onClick={handleViewProfile}
-            className="flex-1 btn-secondary text-xs sm:text-sm py-2 sm:py-2.5"
+            className="flex-1 btn-secondary text-[10px] sm:text-xs py-1.5 sm:py-2"
           >
-            View Profile
+            View
           </button>
           {onInterestSent && (
             <button
               onClick={handleSendInterest}
               disabled={sendingInterest || interestSent}
-              className={`flex-1 text-xs sm:text-sm py-2 sm:py-2.5 flex items-center justify-center gap-1 sm:gap-2 ${
+              className={`flex-1 text-[10px] sm:text-xs py-1.5 sm:py-2 flex items-center justify-center gap-1 cursor-pointer ${
                 interestSent
-                  ? 'bg-green-100 text-green-700 rounded-lg cursor-not-allowed'
+                  ? 'bg-green-100 text-green-700 rounded-lg'
                   : 'btn-primary disabled:opacity-50'
               }`}
             >
               {sendingInterest ? (
-                <>
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span className="hidden sm:inline">Sending...</span>
-                </>
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : interestSent ? (
                 <>
-                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check size={12} />
                   <span>Sent</span>
                 </>
               ) : (
-                <span>Send Interest</span>
+                <>
+                  <Heart size={12} />
+                  <span>Interest</span>
+                </>
               )}
             </button>
           )}

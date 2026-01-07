@@ -664,7 +664,7 @@ const Register = () => {
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base bg-white appearance-none cursor-pointer"
                         required
                       >
-                        <option value="">Select Gender</option>
+                        <option value="" className='hover:bg-green-500'>Select Gender</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                       </select>

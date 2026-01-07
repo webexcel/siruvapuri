@@ -1,7 +1,31 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { Home, Heart, Search, Mail, Menu, X, LogOut } from 'lucide-react';
+import { Home, Heart, Search, Mail, Menu, X, LogOut, Crown, Star, Award } from 'lucide-react';
+
+// Membership Badge Component
+const MembershipBadge = ({ membershipType, isActive, size = 'sm' }) => {
+  if (!membershipType || !isActive) return null;
+
+  const badges = {
+    gold: { icon: Award, color: 'bg-yellow-500', textColor: 'text-yellow-600', label: 'Gold' },
+    platinum: { icon: Star, color: 'bg-gray-400', textColor: 'text-gray-600', label: 'Platinum' },
+    premium: { icon: Crown, color: 'bg-purple-500', textColor: 'text-purple-600', label: 'Premium' }
+  };
+
+  const badge = badges[membershipType];
+  if (!badge) return null;
+
+  const Icon = badge.icon;
+  const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+  const iconSize = size === 'sm' ? 10 : 12;
+
+  return (
+    <div className={`absolute -bottom-0.5 -right-0.5 ${badge.color} ${sizeClasses} rounded-full flex items-center justify-center border-2 border-white shadow-sm`} title={`${badge.label} Member`}>
+      <Icon size={iconSize} className="text-white" />
+    </div>
+  );
+};
 
 const Header = () => {
   const { isAuthenticated, logout, user } = useAuth();
@@ -125,7 +149,11 @@ const Header = () => {
                         {user?.full_name?.[0]?.toUpperCase() || 'U'}
                       </div>
                     )}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                    <MembershipBadge
+                      membershipType={user?.membership_type}
+                      isActive={user?.is_membership_active}
+                      size="sm"
+                    />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-gray-800 group-hover:text-primary transition-colors">
@@ -146,10 +174,10 @@ const Header = () => {
           ) : (
             <nav className="hidden lg:flex items-center gap-3">
               <Link
-                to="/register"
+                to="/login"
                 className="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary to-green-500 text-white font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300"
               >
-                Register
+                Login
               </Link>
             </nav>
           )}
@@ -208,24 +236,42 @@ const Header = () => {
                     className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {user?.profile_picture ? (
-                      <img
-                        src={user.profile_picture}
-                        alt={user?.full_name || 'Profile'}
-                        className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&size=80&background=1EA826&color=fff`;
-                        }}
+                    <div className="relative">
+                      {user?.profile_picture ? (
+                        <img
+                          src={user.profile_picture}
+                          alt={user?.full_name || 'Profile'}
+                          className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&size=80&background=1EA826&color=fff`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white font-bold text-lg">
+                          {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                      )}
+                      <MembershipBadge
+                        membershipType={user?.membership_type}
+                        isActive={user?.is_membership_active}
+                        size="md"
                       />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white font-bold text-lg">
-                        {user?.full_name?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                    )}
+                    </div>
                     <div className="flex flex-col">
                       <span className="font-semibold text-gray-800">{user?.full_name}</span>
-                      <span className="text-xs text-primary">Edit Profile</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-primary">Edit Profile</span>
+                        {user?.membership_type && user?.is_membership_active && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            user.membership_type === 'gold' ? 'bg-yellow-100 text-yellow-700' :
+                            user.membership_type === 'platinum' ? 'bg-gray-100 text-gray-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {user.membership_type.charAt(0).toUpperCase() + user.membership_type.slice(1)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                   <button

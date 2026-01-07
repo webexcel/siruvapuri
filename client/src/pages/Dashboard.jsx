@@ -5,6 +5,30 @@ import { matchAPI, profileAPI } from '../utils/api';
 import ProfileCard from '../components/ProfileCard';
 import CardSkeleton from '../components/CardSkeleton';
 import { showSuccess, showError } from '../utils/sweetalert';
+import { Crown, Star, Award } from 'lucide-react';
+
+// Membership Badge Component
+const MembershipBadge = ({ membershipType, isActive }) => {
+  if (!membershipType || !isActive) return null;
+
+  const badges = {
+    gold: { icon: Award, color: 'bg-yellow-500', label: 'Gold Member' },
+    platinum: { icon: Star, color: 'bg-gray-400', label: 'Platinum Member' },
+    premium: { icon: Crown, color: 'bg-purple-500', label: 'Premium Member' }
+  };
+
+  const badge = badges[membershipType];
+  if (!badge) return null;
+
+  const Icon = badge.icon;
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full font-semibold ${badge.color} text-white`}>
+      <Icon size={12} />
+      {badge.label}
+    </span>
+  );
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -81,9 +105,15 @@ const Dashboard = () => {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
         {/* Welcome Section */}
         <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1">
-            Welcome back, {user?.full_name}!
-          </h1>
+          <div className="flex items-center gap-3 flex-wrap mb-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+              Welcome back, {user?.full_name}!
+            </h1>
+            <MembershipBadge
+              membershipType={user?.membership_type}
+              isActive={user?.is_membership_active}
+            />
+          </div>
           <p className="text-sm sm:text-base text-gray-600">Find your perfect match today</p>
         </div>
 
@@ -169,8 +199,8 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {topMatches.slice(0, 6).map((profile) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+              {topMatches.slice(0, 10).map((profile) => (
                 <ProfileCard
                   key={profile.id}
                   profile={profile}
@@ -192,9 +222,9 @@ const Dashboard = () => {
           </div>
 
           {loading ? (
-            <CardSkeleton count={6} />
+            <CardSkeleton count={8} />
           ) : recommendations.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
               {recommendations.map((profile) => (
                 <ProfileCard
                   key={profile.id}

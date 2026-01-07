@@ -6,7 +6,7 @@ const validateRegistration = [
   body('middle_name').optional().trim(),
   body('last_name').trim().notEmpty().withMessage('Last name is required'),
   body('phone').trim().notEmpty().withMessage('Phone number is required'),
-  body('age').isInt({ min: 18, max: 100 }).withMessage('Age must be between 18 and 100'),
+  body('age').optional().isInt({ min: 18, max: 100 }).withMessage('Age must be between 18 and 100'),
   body('gender').isIn(['male', 'female', 'other']).withMessage('Valid gender is required')
 ];
 

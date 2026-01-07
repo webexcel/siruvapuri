@@ -54,7 +54,11 @@ const getAllUsers = async (req, res) => {
         u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         u.payment_status, u.membership_type, u.membership_expiry,
         u.is_approved, u.password IS NOT NULL as has_password, u.created_at,
-        p.profile_picture
+        p.profile_picture,
+        CASE
+          WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
+          ELSE false
+        END as is_membership_active
       FROM users u
       LEFT JOIN profiles p ON u.id = p.user_id
       ORDER BY u.created_at DESC
@@ -807,6 +811,13 @@ const getFullUserProfile = async (req, res) => {
 const updateFullUserProfile = async (req, res) => {
   const client = await db.connect();
 
+  // Helper to convert empty strings to null for integer fields
+  const toIntOrNull = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? null : parsed;
+  };
+
   try {
     const { userId } = req.params;
     const {
@@ -840,6 +851,11 @@ const updateFullUserProfile = async (req, res) => {
       profile_picture
     } = req.body;
 
+    // Convert numeric fields
+    const ageInt = toIntOrNull(age);
+    const heightInt = toIntOrNull(height);
+    const weightInt = toIntOrNull(weight);
+
     await client.query('BEGIN');
 
     // Check if email is already taken by another user
@@ -868,7 +884,7 @@ const updateFullUserProfile = async (req, res) => {
         is_approved = COALESCE($9, is_approved),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $10
-    `, [email, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved, userId]);
+    `, [email, first_name, middle_name, last_name, phone, ageInt, gender, payment_status, is_approved, userId]);
 
     // Check if profile exists
     const profileExists = await client.query(
@@ -876,45 +892,40 @@ const updateFullUserProfile = async (req, res) => {
       [userId]
     );
 
-    // Generate full_name for profile
-    const fullName = [first_name, middle_name, last_name].filter(Boolean).join(' ');
-
     if (profileExists.rows.length > 0) {
       // Update existing profile
       await client.query(`
         UPDATE profiles SET
-          full_name = $1,
-          height = $2,
-          weight = $3,
-          marital_status = $4,
-          religion = $5,
-          caste = $6,
-          mother_tongue = $7,
-          education = $8,
-          occupation = $9,
-          annual_income = $10,
-          city = $11,
-          state = $12,
-          country = $13,
-          about_me = $14,
-          looking_for = $15,
-          hobbies = $16,
-          created_by = $17,
-          profile_picture = $18,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $19
-      `, [fullName, height, weight, marital_status, religion, caste, mother_tongue,
+          height = $1,
+          weight = $2,
+          marital_status = $3,
+          religion = $4,
+          caste = $5,
+          mother_tongue = $6,
+          education = $7,
+          occupation = $8,
+          annual_income = $9,
+          city = $10,
+          state = $11,
+          country = $12,
+          about_me = $13,
+          looking_for = $14,
+          hobbies = $15,
+          created_by = $16,
+          profile_picture = $17
+        WHERE user_id = $18
+      `, [heightInt, weightInt, marital_status, religion, caste, mother_tongue,
           education, occupation, annual_income, city, state, country,
           about_me, looking_for, hobbies, created_by, profile_picture, userId]);
     } else {
       // Insert new profile
       await client.query(`
         INSERT INTO profiles (
-          user_id, full_name, height, weight, marital_status, religion, caste, mother_tongue,
+          user_id, height, weight, marital_status, religion, caste, mother_tongue,
           education, occupation, annual_income, city, state, country,
           about_me, looking_for, hobbies, created_by, profile_picture
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-      `, [userId, fullName, height, weight, marital_status, religion, caste, mother_tongue,
+      `, [userId, heightInt, weightInt, marital_status, religion, caste, mother_tongue,
           education, occupation, annual_income, city, state, country,
           about_me, looking_for, hobbies, created_by, profile_picture]);
     }
@@ -960,22 +971,14 @@ const uploadUserPhoto = async (req, res) => {
     if (profileExists.rows.length > 0) {
       // Update existing profile
       await db.query(
-        'UPDATE profiles SET profile_picture = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+        'UPDATE profiles SET profile_picture = $1 WHERE user_id = $2',
         [photoUrl, userId]
       );
     } else {
-      // Get user name for profile creation
-      const userResult = await db.query(
-        'SELECT first_name, middle_name, last_name FROM users WHERE id = $1',
-        [userId]
-      );
-      const user = userResult.rows[0];
-      const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ');
-
       // Create profile with photo
       await db.query(
-        'INSERT INTO profiles (user_id, full_name, profile_picture) VALUES ($1, $2, $3)',
-        [userId, fullName, photoUrl]
+        'INSERT INTO profiles (user_id, profile_picture) VALUES ($1, $2)',
+        [userId, photoUrl]
       );
     }
 
