@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminUserAPI } from '../utils/adminApi';
+import { adminUserAPI, adminSettingsAPI } from '../utils/adminApi';
 import AdminLayout from '../components/AdminLayout';
 import SkeletonLoader from '../components/SkeletonLoader';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
@@ -13,7 +13,8 @@ import {
   UserCog,
   Crown,
   Star,
-  Award
+  Award,
+  Sparkles
 } from 'lucide-react';
 
 // Rupee Icon Component
@@ -33,6 +34,20 @@ const AdminUserList = () => {
   const [usersPerPage] = useState(10);
   const [actionLoading, setActionLoading] = useState({});
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [deletingSelected, setDeletingSelected] = useState(false);
+  const [columnSettings, setColumnSettings] = useState({
+    select: true,
+    user: true,
+    contact: true,
+    age_gender: true,
+    payment: true,
+    membership: true,
+    actions: true
+  });
+
+  // Check if a column is visible
+  const isColumnVisible = (key) => columnSettings[key] !== false;
 
   const setUserActionLoading = (userId, action, isLoading) => {
     setActionLoading(prev => ({
@@ -56,6 +71,7 @@ const AdminUserList = () => {
 
     const badges = {
       gold: { icon: Award, color: 'bg-yellow-500', label: 'Gold' },
+      silver: { icon: Sparkles, color: 'bg-slate-400', label: 'Silver' },
       platinum: { icon: Star, color: 'bg-gray-400', label: 'Platinum' },
       premium: { icon: Crown, color: 'bg-purple-500', label: 'Premium' }
     };
@@ -63,13 +79,43 @@ const AdminUserList = () => {
     return badges[membershipType] || null;
   };
 
+  // Get interested membership config
+  const getInterestedMembershipConfig = (interestedMembership) => {
+    if (!interestedMembership) return null;
+
+    const configs = {
+      gold: { icon: Award, bgColor: 'bg-yellow-100', textColor: 'text-yellow-700', borderColor: 'border-yellow-300', label: 'Gold' },
+      silver: { icon: Sparkles, bgColor: 'bg-slate-100', textColor: 'text-slate-700', borderColor: 'border-slate-300', label: 'Silver' },
+      platinum: { icon: Star, bgColor: 'bg-gray-100', textColor: 'text-gray-700', borderColor: 'border-gray-300', label: 'Platinum' },
+      premium: { icon: Crown, bgColor: 'bg-purple-100', textColor: 'text-purple-700', borderColor: 'border-purple-300', label: 'Premium' }
+    };
+
+    return configs[interestedMembership] || null;
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchColumnSettings();
   }, []);
 
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, filterStatus]);
+
+  const fetchColumnSettings = async () => {
+    try {
+      const response = await adminSettingsAPI.getColumnSettings();
+      const settings = response.data.settings?.userList || [];
+      const settingsMap = {};
+      settings.forEach(col => {
+        settingsMap[col.key] = col.enabled;
+      });
+      setColumnSettings(settingsMap);
+    } catch (error) {
+      console.error('Failed to fetch column settings:', error);
+      // Keep defaults if fetch fails
+    }
+  };
 
   const fetchUsers = async (isRefresh = false) => {
     try {
@@ -143,6 +189,7 @@ const AdminUserList = () => {
       try {
         await adminUserAPI.deleteUser(userId);
         showSuccess('User deleted successfully!');
+        setSelectedUsers(prev => prev.filter(id => id !== userId));
         await fetchUsers(true);
       } catch (error) {
         showError('Failed to delete user');
@@ -152,11 +199,76 @@ const AdminUserList = () => {
     }
   };
 
-  // Pagination calculations
+  // Handle select all users on current page
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      const currentPageUserIds = currentUsers.map(user => user.id);
+      setSelectedUsers(currentPageUserIds);
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  // Handle individual user selection
+  const handleSelectUser = (userId, checked) => {
+    if (checked) {
+      setSelectedUsers(prev => [...prev, userId]);
+    } else {
+      setSelectedUsers(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  // Pagination calculations - MUST be before isAllSelected
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  // Check if all current page users are selected
+  const isAllSelected = currentUsers.length > 0 && currentUsers.every(user => selectedUsers.includes(user.id));
+  const isSomeSelected = selectedUsers.length > 0;
+
+  // Handle delete all selected users
+  const handleDeleteSelected = async () => {
+    if (selectedUsers.length === 0) return;
+
+    const result = await showConfirm(
+      `Delete ${selectedUsers.length} selected user(s)? This action cannot be undone.`,
+      'Confirm Bulk Delete'
+    );
+
+    if (result.isConfirmed) {
+      setDeletingSelected(true);
+      setGlobalLoading(true);
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const userId of selectedUsers) {
+        try {
+          await adminUserAPI.deleteUser(userId);
+          successCount++;
+        } catch (error) {
+          failCount++;
+        }
+      }
+
+      setSelectedUsers([]);
+      await fetchUsers(true);
+      setDeletingSelected(false);
+      setGlobalLoading(false);
+
+      if (failCount === 0) {
+        showSuccess(`Successfully deleted ${successCount} user(s)!`);
+      } else {
+        showError(`Deleted ${successCount} user(s), but ${failCount} failed.`);
+      }
+    }
+  };
+
+  // Clear selection when page changes
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [currentPage]);
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -235,6 +347,38 @@ const AdminUserList = () => {
 
         {/* Mobile View (Cards) */}
         <div className="block lg:hidden space-y-4">
+          {/* Mobile Bulk Actions */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  disabled={isAnyActionLoading() || currentUsers.length === 0}
+                  className="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Select All ({currentUsers.length})
+                </span>
+              </label>
+              {isSomeSelected && (
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deletingSelected}
+                  className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-sm hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {deletingSelected ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Trash2 size={14} />
+                  )}
+                  Delete ({selectedUsers.length})
+                </button>
+              )}
+            </div>
+          </div>
+
           {currentUsers.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-500">
               No users found
@@ -242,9 +386,17 @@ const AdminUserList = () => {
           ) : (
             currentUsers.map((user) => {
               const membershipBadge = getMembershipBadge(user.membership_type, user.is_membership_active);
+              const isSelected = selectedUsers.includes(user.id);
               return (
-              <div key={user.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div key={user.id} className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${isSelected ? 'border-red-300 bg-red-50' : ''}`}>
                 <div className="flex items-start gap-4 mb-4">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => handleSelectUser(user.id, e.target.checked)}
+                    disabled={isAnyActionLoading()}
+                    className="w-5 h-5 mt-1 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer disabled:cursor-not-allowed flex-shrink-0"
+                  />
                   <div className="relative flex-shrink-0">
                     {user.profile_picture ? (
                       <img
@@ -276,7 +428,7 @@ const AdminUserList = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                   <div>
                     <span className="text-gray-500">Age:</span>
                     <span className="ml-1 font-medium">{user.age}y</span>
@@ -293,6 +445,23 @@ const AdminUserList = () => {
                       ) : (
                         <span className="text-red-600 font-bold">₹</span>
                       )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Interested:</span>
+                    <span className="ml-1">
+                      {(() => {
+                        const interestedConfig = getInterestedMembershipConfig(user.interested_membership);
+                        if (interestedConfig) {
+                          return (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${interestedConfig.bgColor} ${interestedConfig.textColor}`}>
+                              <interestedConfig.icon size={12} />
+                              {interestedConfig.label}
+                            </span>
+                          );
+                        }
+                        return <span className="text-gray-400">-</span>;
+                      })()}
                     </span>
                   </div>
                 </div>
@@ -342,138 +511,213 @@ const AdminUserList = () => {
 
         {/* Desktop View (Table) */}
         <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Bulk Actions Bar */}
+          {isSomeSelected && (
+            <div className="bg-red-50 border-b border-red-200 px-6 py-3 flex items-center justify-between">
+              <span className="text-sm text-red-700 font-medium">
+                {selectedUsers.length} user(s) selected on this page
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={deletingSelected}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingSelected ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                Delete Selected
+              </button>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Age/Gender
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Payment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  {isColumnVisible('select') && (
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          disabled={isAnyActionLoading() || currentUsers.length === 0}
+                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
+                          title="Select all users on this page"
+                        />
+                        <span className="hidden xl:inline">Select</span>
+                      </div>
+                    </th>
+                  )}
+                  {isColumnVisible('user') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User
+                    </th>
+                  )}
+                  {isColumnVisible('contact') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                  )}
+                  {isColumnVisible('age_gender') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Age/Gender
+                    </th>
+                  )}
+                  {isColumnVisible('payment') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
+                  )}
+                  {isColumnVisible('membership') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Membership
+                    </th>
+                  )}
+                  {isColumnVisible('actions') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={Object.values(columnSettings).filter(v => v).length || 7} className="px-6 py-8 text-center text-gray-500">
                       No users found
                     </td>
                   </tr>
                 ) : (
                   currentUsers.map((user) => {
                     const membershipBadge = getMembershipBadge(user.membership_type, user.is_membership_active);
+                    const isSelected = selectedUsers.includes(user.id);
                     return (
-                    <tr key={user.id} className="transition-all hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="relative flex-shrink-0">
-                            {user.profile_picture ? (
-                              <img
-                                src={user.profile_picture}
-                                alt={`${user.first_name} ${user.last_name}`}
-                                className="h-24 w-20 rounded-lg object-cover shadow-md"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name + ' ' + user.last_name)}&size=80&background=00D26A&color=fff`;
-                                }}
-                              />
-                            ) : (
-                              <div className="h-20 w-16 rounded-lg bg-gradient-to-br from-primary to-green-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                                {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
-                              </div>
-                            )}
-                            {membershipBadge && (
-                              <div className={`absolute -top-1 -right-1 ${membershipBadge.color} text-white p-1 rounded-full shadow-md`} title={membershipBadge.label}>
-                                <membershipBadge.icon size={14} />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.first_name} {user.middle_name || ''} {user.last_name}
+                    <tr key={user.id} className={`transition-all hover:bg-gray-50 ${isSelected ? 'bg-red-50' : ''}`}>
+                      {isColumnVisible('select') && (
+                        <td className="px-4 py-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleSelectUser(user.id, e.target.checked)}
+                            disabled={isAnyActionLoading()}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
+                          />
+                        </td>
+                      )}
+                      {isColumnVisible('user') && (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-shrink-0">
+                              {user.profile_picture ? (
+                                <img
+                                  src={user.profile_picture}
+                                  alt={`${user.first_name} ${user.last_name}`}
+                                  className="h-24 w-20 rounded-lg object-cover shadow-md"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name + ' ' + user.last_name)}&size=80&background=00D26A&color=fff`;
+                                  }}
+                                />
+                              ) : (
+                                <div className="h-20 w-16 rounded-lg bg-gradient-to-br from-primary to-green-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                                  {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                                </div>
+                              )}
                             </div>
-                            {membershipBadge && (
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                user.membership_type === 'gold' ? 'bg-yellow-100 text-yellow-800' :
-                                user.membership_type === 'platinum' ? 'bg-gray-100 text-gray-800' :
-                                'bg-purple-100 text-purple-800'
-                              }`}>
-                                {membershipBadge.label}
-                              </span>
-                            )}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {user.first_name} {user.middle_name || ''} {user.last_name}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{user.email}</div>
-                        <div className="text-sm text-gray-500">{user.phone}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{user.age} years</div>
-                        <div className="text-sm text-gray-500 capitalize">{user.gender}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.payment_status === 'paid' ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 text-sm font-semibold bg-green-100 px-3 py-1 rounded-full">
-                            Paid
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-red-600 text-sm font-semibold bg-red-100 px-3 py-1 rounded-full">
-                            Unpaid
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => navigate(`/users/${user.id}/edit`)}
-                            disabled={isAnyActionLoading()}
-                            className="p-2 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Edit Profile"
-                          >
-                            <UserCog size={18} />
-                          </button>
-                          <button
-                            onClick={() => handlePaymentToggle(user.id, user.payment_status)}
-                            disabled={isAnyActionLoading()}
-                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                              user.payment_status === 'paid'
-                                ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                            }`}
-                            title={user.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-                          >
-                            {isActionLoading(user.id, 'payment') ? (
-                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <RupeeIcon size={18} />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id, `${user.first_name} ${user.last_name}`)}
-                            disabled={isAnyActionLoading()}
-                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Delete"
-                          >
+                        </td>
+                      )}
+                      {isColumnVisible('contact') && (
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{user.email}</div>
+                          <div className="text-sm text-gray-500">{user.phone}</div>
+                        </td>
+                      )}
+                      {isColumnVisible('age_gender') && (
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">{user.age} years</div>
+                          <div className="text-sm text-gray-500 capitalize">{user.gender}</div>
+                        </td>
+                      )}
+                      {isColumnVisible('payment') && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {user.payment_status === 'paid' ? (
+                            <span className="inline-flex items-center gap-1 text-green-600 text-sm font-semibold bg-green-100 px-3 py-1 rounded-full">
+                              Paid
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-red-600 text-sm font-semibold bg-red-100 px-3 py-1 rounded-full">
+                              Unpaid
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      {isColumnVisible('membership') && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {membershipBadge ? (
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium border ${
+                              user.membership_type === 'gold' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+                              user.membership_type === 'silver' ? 'bg-slate-100 text-slate-700 border-slate-300' :
+                              user.membership_type === 'platinum' ? 'bg-gray-100 text-gray-700 border-gray-300' :
+                              'bg-purple-100 text-purple-700 border-purple-300'
+                            }`}>
+                              <membershipBadge.icon size={14} />
+                              {membershipBadge.label}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                      )}
+                      {isColumnVisible('actions') && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => navigate(`/users/${user.id}/edit`)}
+                              disabled={isAnyActionLoading()}
+                              className="p-2 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Edit Profile"
+                            >
+                              <UserCog size={18} />
+                            </button>
+                            <button
+                              onClick={() => handlePaymentToggle(user.id, user.payment_status)}
+                              disabled={isAnyActionLoading()}
+                              className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                                user.payment_status === 'paid'
+                                  ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                              }`}
+                              title={user.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                            >
+                              {isActionLoading(user.id, 'payment') ? (
+                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <RupeeIcon size={18} />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, `${user.first_name} ${user.last_name}`)}
+                              disabled={isAnyActionLoading()}
+                              className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Delete"
+                            >
                             {isActionLoading(user.id, 'delete') ? (
-                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <Trash2 size={18} />
-                            )}
-                          </button>
-                        </div>
-                      </td>
+                                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Trash2 size={18} />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );})
                 )}

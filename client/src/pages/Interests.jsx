@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import { matchAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 import { Crown, Star, Award } from 'lucide-react';
@@ -75,6 +76,8 @@ const InterestsSkeleton = () => (
 );
 
 const Interests = () => {
+  const { theme } = useTheme();
+  const avatarBgColor = theme?.primary?.replace('#', '') || '8B1538';
   const [activeTab, setActiveTab] = useState('received');
   const [receivedInterests, setReceivedInterests] = useState([]);
   const [sentInterests, setSentInterests] = useState([]);
@@ -114,12 +117,12 @@ const Interests = () => {
     <div className="card p-3 sm:p-4 md:p-6">
       <div className="flex items-start gap-3 sm:gap-4">
         <img
-          src={interest.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=00D26A&color=fff`}
+          src={interest.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=${avatarBgColor}&color=fff`}
           alt={interest.full_name}
           className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover flex-shrink-0"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=00D26A&color=fff`;
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(interest.full_name || 'User')}&size=100&background=${avatarBgColor}&color=fff`;
           }}
         />
 
@@ -155,7 +158,7 @@ const Interests = () => {
                   interest.status === 'sent'
                     ? 'bg-blue-100 text-blue-800'
                     : interest.status === 'accepted'
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-red-100 text-red-800'
                 }`}
               >

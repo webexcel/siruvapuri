@@ -43,3 +43,12 @@ coverage/
 .cache/
 .temp/
 *.tmp
+
+# Docker
+nginx/ssl/
+nginx/logs/
+database/backups/
+
+# Uploaded files
+uploads/
+nul

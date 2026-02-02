@@ -47,6 +47,11 @@ body {
     font-family: 'Playfair Display', serif;
     letter-spacing: 0.02em;
   }
+
+  /* All buttons should have pointer cursor */
+  button {
+    @apply cursor-pointer;
+  }
 }
 
 /* -------------------------------------------------
@@ -65,7 +70,8 @@ body {
       rounded-full
       tracking-wide
       shadow-md
-      transition-all duration-300;
+      transition-all duration-300
+      cursor-pointer;
   }
 
   /* Secondary Button */
@@ -78,7 +84,8 @@ body {
       font-semibold
       px-8 py-3
       rounded-full
-      transition-all duration-300;
+      transition-all duration-300
+      cursor-pointer;
   }
 
   /* Accent Button */
@@ -89,7 +96,8 @@ body {
       text-[var(--color-gold)]
       font-semibold
       px-8 py-3
-      rounded-full;
+      rounded-full
+      cursor-pointer;
   }
 
   /* Input Fields */

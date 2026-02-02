@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { authAPI } from '../utils/api';
 import { User, Search, Heart, Phone, Shield, Users, Flag, Settings } from 'lucide-react';
 import { AnimateOnScroll } from '../hooks/useScrollAnimation.jsx';
@@ -8,6 +9,8 @@ import Swal from 'sweetalert2';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
+  const { theme } = useTheme();
+  const avatarBgColor = theme?.primary?.replace('#', '') || '8B1538';
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -36,7 +39,7 @@ const Home = () => {
           icon: 'success',
           title: 'Registration Successful!',
           text: 'Please wait for admin approval. You will receive your password via email.',
-          confirmButtonColor: '#00D26A',
+          confirmButtonColor: '#8B1538',
         });
         // Reset form
         setFormData({
@@ -215,7 +218,7 @@ const Home = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full sm:w-auto px-6 py-2 text-sm bg-gradient-to-r from-primary to-green-500 hover:from-green-500 hover:to-primary text-white font-semibold rounded-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2 text-sm bg-gradient-to-r from-primary to-primary-light hover:from-primary-light hover:to-primary text-white font-semibold rounded-lg transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {loading ? (
                         <>
@@ -304,7 +307,7 @@ const Home = () => {
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-2">
               Blessed Matches from Our Community
             </h2>
-            <div className="w-16 sm:w-20 h-1 bg-gradient-to-r from-primary to-green-400 mx-auto mb-3 sm:mb-4 rounded-full"></div>
+            <div className="w-16 sm:w-20 h-1 bg-gradient-to-r from-primary to-primary-light mx-auto mb-3 sm:mb-4 rounded-full"></div>
             <p className="text-center text-gray-500 text-sm sm:text-base mb-8 sm:mb-12 max-w-2xl mx-auto px-2">
               Real stories from couples who found their perfect match through Siruvapuri Matrimony
             </p>
@@ -411,7 +414,7 @@ const Home = () => {
                   href="https://wa.me/919999999999"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-primary to-green-500 text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 text-center"
+                  className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-primary to-primary-light text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 text-center"
                 >
                   Connect on WhatsApp
                 </a>
@@ -447,7 +450,7 @@ const SuccessStoryCard = ({ story }) => (
         alt={story.names}
         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         onError={(e) => {
-          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=1EA826&color=fff`;
+          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=${avatarBgColor}&color=fff`;
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -476,7 +479,7 @@ const ExtendedStoryCard = ({ story }) => (
           alt={story.names}
           className="w-full h-56 sm:h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-700"
           onError={(e) => {
-            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=600&background=1EA826&color=fff`;
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=600&background=${avatarBgColor}&color=fff`;
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>

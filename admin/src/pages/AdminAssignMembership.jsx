@@ -1,57 +1,62 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { adminUserAPI } from '../utils/adminApi';
+import { adminUserAPI, adminMembershipAPI } from '../utils/adminApi';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import Swal from 'sweetalert2';
 import { Search, UserPlus, Check, X, User, Mail, Phone, Calendar, Crown, Award } from 'lucide-react';
 
-const MEMBERSHIP_PLANS = [
-  {
-    id: 'gold',
-    name: 'Gold',
-    price: 2999,
-    duration: '3 Months',
-    features: ['View 50 Profiles', 'Send 25 Interests', 'Chat Support'],
-    color: 'from-yellow-400 to-yellow-600',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-700',
-    borderColor: 'border-yellow-400'
-  },
-  {
-    id: 'platinum',
-    name: 'Platinum',
-    price: 4999,
-    duration: '6 Months',
-    features: ['View 150 Profiles', 'Send 75 Interests', 'Priority Support', 'Profile Highlight'],
-    color: 'from-gray-300 to-gray-500',
-    bgColor: 'bg-gray-50',
-    textColor: 'text-gray-700',
-    borderColor: 'border-gray-400'
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 7999,
-    duration: '12 Months',
-    features: ['Unlimited Profiles', 'Unlimited Interests', '24/7 Support', 'Verified Badge', 'Featured Profile'],
-    color: 'from-purple-400 to-purple-600',
-    bgColor: 'bg-purple-50',
-    textColor: 'text-purple-700',
-    borderColor: 'border-purple-400'
+// Helper function to get color classes based on plan color
+const getColorClasses = (color) => {
+  // Map gradient color to background, text, and border colors
+  if (color?.includes('yellow')) {
+    return { bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', borderColor: 'border-yellow-400' };
+  } else if (color?.includes('gray')) {
+    return { bgColor: 'bg-gray-50', textColor: 'text-gray-700', borderColor: 'border-gray-400' };
+  } else if (color?.includes('purple')) {
+    return { bgColor: 'bg-purple-50', textColor: 'text-purple-700', borderColor: 'border-purple-400' };
+  } else if (color?.includes('blue')) {
+    return { bgColor: 'bg-blue-50', textColor: 'text-blue-700', borderColor: 'border-blue-400' };
+  } else if (color?.includes('green')) {
+    return { bgColor: 'bg-green-50', textColor: 'text-green-700', borderColor: 'border-green-400' };
+  } else if (color?.includes('red')) {
+    return { bgColor: 'bg-red-50', textColor: 'text-red-700', borderColor: 'border-red-400' };
+  } else if (color?.includes('pink')) {
+    return { bgColor: 'bg-pink-50', textColor: 'text-pink-700', borderColor: 'border-pink-400' };
+  } else if (color?.includes('orange')) {
+    return { bgColor: 'bg-orange-50', textColor: 'text-orange-700', borderColor: 'border-orange-400' };
   }
-];
+  return { bgColor: 'bg-gray-50', textColor: 'text-gray-700', borderColor: 'border-gray-400' };
+};
 
 const AdminAssignMembership = () => {
   const [users, setUsers] = useState([]);
+  const [membershipPlans, setMembershipPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('unpaid');
   const [processing, setProcessing] = useState(null);
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [usersResponse, plansResponse] = await Promise.all([
+        adminUserAPI.getAllUsers(),
+        adminMembershipAPI.getPlans()
+      ]);
+      setUsers(usersResponse.data.users || []);
+      // Only show active plans
+      const activePlans = (plansResponse.data.plans || []).filter(plan => plan.is_active);
+      setMembershipPlans(activePlans);
+    } catch (error) {
+      showError('Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -59,27 +64,30 @@ const AdminAssignMembership = () => {
       setUsers(response.data.users || []);
     } catch (error) {
       showError('Failed to fetch users');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleAssignMembership = async (userId, userName) => {
+    if (membershipPlans.length === 0) {
+      showError('No membership plans available. Please create plans first.');
+      return;
+    }
+
     const { value: membershipType } = await Swal.fire({
       title: `Assign Membership to ${userName}`,
       html: `
         <div class="text-left space-y-4">
           <p class="text-gray-600 text-sm mb-4">Select a membership plan:</p>
-          ${MEMBERSHIP_PLANS.map(plan => `
-            <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-green-500 transition-colors membership-option" data-plan="${plan.id}">
-              <input type="radio" name="membership" value="${plan.id}" class="mr-4 accent-green-500" />
+          ${membershipPlans.map(plan => `
+            <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-green-500 transition-colors membership-option" data-plan="${plan.name.toLowerCase()}">
+              <input type="radio" name="membership" value="${plan.name.toLowerCase()}" class="mr-4 accent-green-500" />
               <div class="flex-1">
                 <div class="flex items-center justify-between">
                   <span class="font-bold text-lg">${plan.name}</span>
-                  <span class="font-bold text-green-600">Rs. ${plan.price.toLocaleString()}</span>
+                  <span class="font-bold text-green-600">Rs. ${Number(plan.price).toLocaleString()}</span>
                 </div>
-                <div class="text-sm text-gray-500">${plan.duration}</div>
-                <div class="text-xs text-gray-400 mt-1">${plan.features.join(' | ')}</div>
+                <div class="text-sm text-gray-500">${plan.duration_months} Months</div>
+                <div class="text-xs text-gray-400 mt-1">${(plan.features || []).join(' | ')}</div>
               </div>
             </label>
           `).join('')}
@@ -105,8 +113,8 @@ const AdminAssignMembership = () => {
     setProcessing(userId);
     try {
       await adminUserAPI.assignMembership(userId, { membership_type: membershipType });
-      const plan = MEMBERSHIP_PLANS.find(p => p.id === membershipType);
-      showSuccess(`${plan.name} membership assigned to ${userName} successfully!`);
+      const plan = membershipPlans.find(p => p.name.toLowerCase() === membershipType);
+      showSuccess(`${plan?.name || membershipType} membership assigned to ${userName} successfully!`);
       fetchUsers();
     } catch (error) {
       showError(error.response?.data?.error || 'Failed to assign membership');
@@ -153,11 +161,12 @@ const AdminAssignMembership = () => {
   };
 
   const getMembershipBadge = (membershipType) => {
-    const plan = MEMBERSHIP_PLANS.find(p => p.id === membershipType);
-    if (!plan) return null;
+    if (!membershipType) return null;
+    const plan = membershipPlans.find(p => p.name.toLowerCase() === membershipType.toLowerCase());
+    const colorClasses = plan ? getColorClasses(plan.color) : getColorClasses(null);
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${plan.bgColor} ${plan.textColor} border ${plan.borderColor}`}>
-        {plan.name}
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClasses.bgColor} ${colorClasses.textColor} border ${colorClasses.borderColor}`}>
+        {plan?.name || membershipType}
       </span>
     );
   };
@@ -177,14 +186,17 @@ const AdminAssignMembership = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Calculate stats dynamically based on available plans
   const stats = {
     total: users.length,
     paid: users.filter(u => u.payment_status === 'paid').length,
     unpaid: users.filter(u => u.payment_status === 'unpaid').length,
-    gold: users.filter(u => u.membership_type === 'gold').length,
-    platinum: users.filter(u => u.membership_type === 'platinum').length,
-    premium: users.filter(u => u.membership_type === 'premium').length,
   };
+
+  // Add counts for each membership plan
+  membershipPlans.forEach(plan => {
+    stats[plan.name.toLowerCase()] = users.filter(u => u.membership_type?.toLowerCase() === plan.name.toLowerCase()).length;
+  });
 
   if (loading) {
     return (
@@ -213,41 +225,47 @@ const AdminAssignMembership = () => {
         </div>
 
         {/* Membership Plans Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {MEMBERSHIP_PLANS.map((plan) => (
-            <div key={plan.id} className="relative rounded-xl overflow-hidden shadow-lg">
-              <div className={`bg-gradient-to-r ${plan.color} p-6 text-white`}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <Crown size={24} />
+        {membershipPlans.length > 0 ? (
+          <div className={`grid grid-cols-1 ${membershipPlans.length === 2 ? 'md:grid-cols-2' : membershipPlans.length >= 3 ? 'md:grid-cols-3' : ''} gap-6`}>
+            {membershipPlans.map((plan) => (
+              <div key={plan.id} className="relative rounded-xl overflow-hidden shadow-lg">
+                <div className={`bg-gradient-to-r ${plan.color || 'from-gray-400 to-gray-600'} p-6 text-white`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold">{plan.name}</h3>
+                    <Crown size={24} />
+                  </div>
+                  <div className="text-3xl font-bold">Rs. {Number(plan.price).toLocaleString()}</div>
+                  <p className="text-sm opacity-90">{plan.duration_months} Months</p>
                 </div>
-                <div className="text-3xl font-bold">Rs. {plan.price.toLocaleString()}</div>
-                <p className="text-sm opacity-90">{plan.duration}</p>
-              </div>
-              <div className="bg-white p-4">
-                <ul className="space-y-2">
-                  {plan.features.slice(0, 3).map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm">
-                      <Check size={14} className="text-green-500" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 pt-4 border-t-1 border-t-gray-300">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Active Users:</span>
-                    <span className="font-bold text-lg">
-                      {stats[plan.id] || 0}
-                    </span>
+                <div className="bg-white p-4">
+                  <ul className="space-y-2">
+                    {(plan.features || []).slice(0, 3).map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm">
+                        <Check size={14} className="text-green-500" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 pt-4 border-t-1 border-t-gray-300">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500">Active Users:</span>
+                      <span className="font-bold text-lg">
+                        {stats[plan.name.toLowerCase()] || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <p className="text-yellow-800">No membership plans available. Please create plans in the Membership section first.</p>
+          </div>
+        )}
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
@@ -275,16 +293,6 @@ const AdminAssignMembership = () => {
                 <p className="text-3xl font-bold mt-2 text-orange-600">{stats.unpaid}</p>
               </div>
               <X className="text-orange-500" size={40} />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm">Premium Members</p>
-                <p className="text-3xl font-bold mt-2 text-purple-600">{stats.premium}</p>
-              </div>
-              <Crown className="text-purple-500" size={40} />
             </div>
           </div>
         </div>

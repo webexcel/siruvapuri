@@ -7,21 +7,58 @@ const updateProfile = async (req, res) => {
     const userId = req.userId;
     const profileData = req.body;
 
+    // All allowed profile fields based on the matrimonial form
     const allowedFields = [
-      'height', 'weight', 'marital_status', 'religion', 'caste', 'mother_tongue',
-      'education', 'occupation', 'annual_income', 'city', 'state', 'country',
-      'about_me', 'profile_picture', 'looking_for', 'hobbies', 'created_by'
+      // Primary Information
+      'full_name', 'date_of_birth', 'birth_place',
+
+      // Physical Attributes
+      'height', 'weight', 'complexion', 'blood_group', 'physical_status',
+
+      // Background
+      'marital_status', 'religion', 'caste', 'sub_caste', 'mother_tongue',
+
+      // Education & Career
+      'education', 'education_detail', 'occupation', 'company_name', 'working_place',
+      'annual_income', 'monthly_income',
+
+      // Horoscope Details
+      'time_of_birth', 'rasi', 'nakshatra', 'lagnam', 'kothram', 'dosham', 'matching_stars',
+
+      // Family Information
+      'father_name', 'father_occupation', 'father_status',
+      'mother_name', 'mother_occupation', 'mother_status',
+      'brothers_count', 'brothers_married', 'sisters_count', 'sisters_married',
+      'family_type', 'family_status', 'own_house', 'native_place',
+
+      // Contact & Address
+      'address', 'city', 'state', 'country', 'pincode',
+
+      // Alliance Expectations
+      'expected_age_min', 'expected_age_max', 'expected_qualification',
+      'expected_location', 'expected_income',
+
+      // About
+      'about_me', 'looking_for', 'hobbies',
+
+      // Other
+      'profile_picture', 'created_by'
     ];
 
     const updateFields = [];
     const updateValues = [];
 
-    let paramIndex = 1;
     allowedFields.forEach(field => {
       if (profileData[field] !== undefined) {
-        updateFields.push(`${field} = $${paramIndex}`);
-        updateValues.push(profileData[field]);
-        paramIndex++;
+        updateFields.push(`${field} = ?`);
+        // Convert empty strings to null for numeric fields
+        const numericFields = ['brothers_count', 'brothers_married', 'sisters_count', 'sisters_married',
+          'expected_age_min', 'expected_age_max'];
+        if (numericFields.includes(field) && profileData[field] === '') {
+          updateValues.push(null);
+        } else {
+          updateValues.push(profileData[field]);
+        }
       }
     });
 
@@ -32,9 +69,30 @@ const updateProfile = async (req, res) => {
     updateValues.push(userId);
 
     await db.query(
-      `UPDATE profiles SET ${updateFields.join(', ')} WHERE user_id = $${paramIndex}`,
+      `UPDATE profiles SET ${updateFields.join(', ')} WHERE user_id = ?`,
       updateValues
     );
+
+    // Also update user table fields if provided (phone, age)
+    const userFields = [];
+    const userValues = [];
+
+    if (profileData.phone !== undefined) {
+      userFields.push('phone = ?');
+      userValues.push(profileData.phone);
+    }
+    if (profileData.age !== undefined) {
+      userFields.push('age = ?');
+      userValues.push(profileData.age);
+    }
+
+    if (userFields.length > 0) {
+      userValues.push(userId);
+      await db.query(
+        `UPDATE users SET ${userFields.join(', ')} WHERE id = ?`,
+        userValues
+      );
+    }
 
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
@@ -57,7 +115,7 @@ const getProfileById = async (req, res) => {
 
     const result = await db.query(
       `SELECT u.id,
-              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.first_name, u.middle_name, u.last_name,
               u.gender, u.age, u.email, u.phone,
               u.membership_type, u.membership_expiry,
@@ -65,12 +123,23 @@ const getProfileById = async (req, res) => {
                 WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
                 ELSE false
               END as is_membership_active,
-              p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
-              p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
+              p.date_of_birth, p.birth_place,
+              p.height, p.weight, p.complexion, p.blood_group, p.physical_status,
+              p.marital_status, p.religion, p.caste, p.sub_caste, p.mother_tongue,
+              p.education, p.education_detail, p.occupation, p.company_name, p.working_place,
+              p.annual_income, p.monthly_income,
+              p.time_of_birth, p.rasi, p.nakshatra, p.lagnam, p.kothram, p.dosham, p.matching_stars,
+              p.father_name, p.father_occupation, p.father_status,
+              p.mother_name, p.mother_occupation, p.mother_status,
+              p.brothers_count, p.brothers_married, p.sisters_count, p.sisters_married,
+              p.family_type, p.family_status, p.own_house, p.native_place,
+              p.address, p.city, p.state, p.country, p.pincode,
+              p.expected_age_min, p.expected_age_max, p.expected_qualification,
+              p.expected_location, p.expected_income,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies, p.created_by
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = $1`,
+       WHERE u.id = ?`,
       [profileId]
     );
 
@@ -82,7 +151,7 @@ const getProfileById = async (req, res) => {
     if (viewerId && viewerId !== profileId) {
       try {
         await db.query(
-          'INSERT INTO profile_views (viewer_id, viewed_id) VALUES ($1, $2)',
+          'INSERT INTO profile_views (viewer_id, viewed_id) VALUES (?, ?)',
           [viewerId, profileId]
         );
       } catch (viewError) {
@@ -106,9 +175,9 @@ const updatePreferences = async (req, res) => {
 
     await db.query(
       `UPDATE preferences SET
-       age_min = $1, age_max = $2, height_min = $3, height_max = $4,
-       marital_status = $5, religion = $6, education = $7, occupation = $8, location = $9
-       WHERE user_id = $10`,
+       age_min = ?, age_max = ?, height_min = ?, height_max = ?,
+       marital_status = ?, religion = ?, education = ?, occupation = ?, location = ?
+       WHERE user_id = ?`,
       [age_min, age_max, height_min, height_max, marital_status, religion, education, occupation, location, userId]
     );
 
@@ -123,7 +192,7 @@ const updatePreferences = async (req, res) => {
 const getPreferences = async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT * FROM preferences WHERE user_id = $1',
+      'SELECT * FROM preferences WHERE user_id = ?',
       [req.userId]
     );
 
@@ -143,7 +212,7 @@ const getProfileViewsCount = async (req, res) => {
     const result = await db.query(
       `SELECT COUNT(DISTINCT viewer_id) as view_count
        FROM profile_views
-       WHERE viewed_id = $1`,
+       WHERE viewed_id = ?`,
       [userId]
     );
 
@@ -169,7 +238,7 @@ const uploadProfilePicture = async (req, res) => {
 
     // Get old profile picture URL to delete from S3
     const oldPicResult = await db.query(
-      'SELECT profile_picture FROM profiles WHERE user_id = $1',
+      'SELECT profile_picture FROM profiles WHERE user_id = ?',
       [userId]
     );
 
@@ -179,7 +248,7 @@ const uploadProfilePicture = async (req, res) => {
 
     // Update profile with new picture URL
     await db.query(
-      'UPDATE profiles SET profile_picture = $1 WHERE user_id = $2',
+      'UPDATE profiles SET profile_picture = ? WHERE user_id = ?',
       [imageUrl, userId]
     );
 

@@ -16,23 +16,23 @@ body {
 }
 
 /* -------------------------------------------------
-   TAILWIND v4 THEME – GREEN TAMIL WEDDING
+   TAILWIND v4 THEME – MAROON & GOLD TAMIL WEDDING
 -------------------------------------------------- */
 @theme {
-  /* 🌿 Primary – Auspicious Green */
-  --color-primary: #1EA826;          /* Emerald Green */
-  --color-primary-dark: #0B7813;
-  --color-primary-light: #1f7a4d;
+  /* 🔴 Primary – Traditional Maroon/Burgundy */
+  --color-primary: #8B1538;          /* Deep Maroon */
+  --color-primary-dark: #6B0F2B;     /* Darker Maroon */
+  --color-primary-light: #A91D45;    /* Lighter Maroon */
 
-  /* ✨ Wedding Accents */
-  --color-gold: #FFf;
-  --color-gold-light: #f5e6b0;
+  /* ✨ Wedding Accents - Gold */
+  --color-gold: #D4AF37;             /* Classic Gold */
+  --color-gold-light: #F5E6B0;       /* Light Gold */
 
-  /* 🔴 Minimal traditional contrast */
+  /* 🔴 Maroon accent */
   --color-maroon: #7a1f2b;
 
   /* 🤍 Base */
-  --color-ivory: #fffaf0;
+  --color-ivory: #FFFAF0;
 }
 
 /* -------------------------------------------------
@@ -47,6 +47,11 @@ body {
     font-family: 'Playfair Display', serif;
     letter-spacing: 0.02em;
   }
+
+  /* All buttons should have pointer cursor */
+  button {
+    @apply cursor-pointer;
+  }
 }
 
 /* -------------------------------------------------
@@ -54,7 +59,7 @@ body {
 -------------------------------------------------- */
 @layer components {
 
-  /* 🌿 Primary Wedding Button */
+  /* Primary Wedding Button */
   .btn-primary {
     @apply
       bg-primary
@@ -65,10 +70,11 @@ body {
       rounded-full
       tracking-wide
       shadow-md
-      transition-all duration-300;
+      transition-all duration-300
+      cursor-pointer;
   }
 
-  /* ✨ Secondary Button */
+  /* Secondary Button */
   .btn-secondary {
     @apply
       border-2 border-primary
@@ -78,10 +84,11 @@ body {
       font-semibold
       px-8 py-3
       rounded-full
-      transition-all duration-300;
+      transition-all duration-300
+      cursor-pointer;
   }
 
-  /* 🔴 Accent Button (rare use only) */
+  /* Accent Button (rare use only) */
   .btn-maroon {
     @apply
       bg-[var(--color-maroon)]
@@ -89,7 +96,8 @@ body {
       text-[var(--color-gold)]
       font-semibold
       px-8 py-3
-      rounded-full;
+      rounded-full
+      cursor-pointer;
   }
 
   /* 📝 Input Fields */
@@ -146,7 +154,7 @@ body {
   /* 🧿 Trust Feature Box */
   .trust-box {
     @apply
-      bg-[#f3f8f5]
+      bg-[#fdf8f5]
       border border-primary/10
       rounded-xl
       p-4

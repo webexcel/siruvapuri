@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 /**
  * ============================================
@@ -106,6 +107,8 @@ const AnimatedSection = ({ children, className = '', delay = 0 }) => {
 // ============================================
 
 const SuccessStories = () => {
+  const { theme } = useTheme();
+  const avatarBgColor = theme?.primary?.replace('#', '') || '1EA826';
   const [filter, setFilter] = useState('all');
   const prefersReducedMotion = useReducedMotion();
 
@@ -393,7 +396,7 @@ const StoryCard = ({ story, index }) => {
           alt={story.names}
           className="w-full h-full object-cover"
           onError={(e) => {
-            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=00D26A&color=fff`;
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.names)}&size=400&background=${avatarBgColor}&color=fff`;
           }}
           whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
           transition={{ duration: 0.4 }}

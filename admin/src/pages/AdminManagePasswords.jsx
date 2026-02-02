@@ -73,7 +73,7 @@ const AdminManagePasswords = () => {
   };
 
   const copyCredentials = async (user) => {
-    const credentials = `Email: ${user.email}\nPassword: ${user.plain_password || 'Not set'}`;
+    const credentials = `Phone: ${user.phone}\nPassword: ${user.plain_password || 'Not set'}`;
     await copyToClipboard(credentials, 'Credentials');
   };
 
@@ -356,15 +356,15 @@ const AdminManagePasswords = () => {
                         {user.has_password ? (
                           <div className="space-y-2">
                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                              <div className="text-xs text-gray-500 mb-1">Email</div>
+                              <div className="text-xs text-gray-500 mb-1">Phone</div>
                               <div className="flex items-center gap-2">
                                 <code className="text-sm font-mono text-gray-800 flex-1">
-                                  {user.email}
+                                  {user.phone}
                                 </code>
                                 <button
-                                  onClick={() => copyToClipboard(user.email, 'Email')}
+                                  onClick={() => copyToClipboard(user.phone, 'Phone')}
                                   className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                  title="Copy email"
+                                  title="Copy phone"
                                 >
                                   <Copy size={14} className="text-gray-600" />
                                 </button>

@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useModules } from '../context/ModuleContext';
 import { matchAPI, profileAPI } from '../utils/api';
 import ProfileCard from '../components/ProfileCard';
 import CardSkeleton from '../components/CardSkeleton';
 import { showSuccess, showError } from '../utils/sweetalert';
 import { Crown, Star, Award } from 'lucide-react';
 
-// Membership Badge Component
-const MembershipBadge = ({ membershipType, isActive }) => {
+// Membership Badge Component - Dynamically controlled by superadmin module settings
+const MembershipBadge = ({ membershipType, isActive, isMembershipEnabled }) => {
+  // Check if membership module is enabled
+  if (!isMembershipEnabled) return null;
   if (!membershipType || !isActive) return null;
 
   const badges = {
@@ -32,6 +35,8 @@ const MembershipBadge = ({ membershipType, isActive }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { isModuleEnabled } = useModules();
+  const isMembershipEnabled = isModuleEnabled('membership');
   const [recommendations, setRecommendations] = useState([]);
   const [topMatches, setTopMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +45,13 @@ const Dashboard = () => {
     receivedInterests: 0,
     sentInterests: 0,
     profileViews: 0,
+  });
+  const [viewStats, setViewStats] = useState({
+    profileViewsLimit: null,
+    profileViewsUsed: 0,
+    profileViewsRemaining: null,
+    isUnlimited: false,
+    hasActiveMembership: false,
   });
 
   useEffect(() => {
@@ -56,6 +68,7 @@ const Dashboard = () => {
       matchAPI.getReceivedInterests(),
       matchAPI.getSentInterests(),
       profileAPI.getProfileViewsCount(),
+      profileAPI.getViewStats(),
     ]);
 
     if (results[0].status === 'fulfilled') {
@@ -79,6 +92,18 @@ const Dashboard = () => {
     const profileViews = results[4].status === 'fulfilled'
       ? results[4].value.data.viewCount || 0
       : 0;
+
+    // Extract view stats
+    if (results[5].status === 'fulfilled') {
+      const viewStatsData = results[5].value.data;
+      setViewStats({
+        profileViewsLimit: viewStatsData.profileViewsLimit,
+        profileViewsUsed: viewStatsData.profileViewsUsed || 0,
+        profileViewsRemaining: viewStatsData.profileViewsRemaining,
+        isUnlimited: viewStatsData.isUnlimited || false,
+        hasActiveMembership: viewStatsData.hasActiveMembership || false,
+      });
+    }
 
     setStats({
       receivedInterests,
@@ -112,13 +137,14 @@ const Dashboard = () => {
             <MembershipBadge
               membershipType={user?.membership_type}
               isActive={user?.is_membership_active}
+              isMembershipEnabled={isMembershipEnabled}
             />
           </div>
           <p className="text-sm sm:text-base text-gray-600">Find your perfect match today</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
+        <div className={`grid ${isMembershipEnabled ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-2 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8`}>
           <Link to="/interests" className="card p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
             <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-2">
               <div className="text-center sm:text-left">
@@ -161,11 +187,39 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
+          {/* Profile Views Remaining Card - Dynamically controlled by superadmin */}
+          {isMembershipEnabled && (
+            <Link to="/membership" className="card p-3 sm:p-4 md:p-6 hover:shadow-xl transition-shadow">
+              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-2">
+                <div className="text-center sm:text-left">
+                  <p className="text-gray-600 text-xs sm:text-sm mb-1">Remaining</p>
+                  <p className={`text-xl sm:text-2xl md:text-3xl font-bold ${viewStats.isUnlimited ? 'text-emerald-600' : viewStats.profileViewsRemaining > 10 ? 'text-orange-500' : 'text-red-600'}`}>
+                    {viewStats.isUnlimited ? '∞' : viewStats.profileViewsRemaining ?? 0}
+                  </p>
+                  {!viewStats.isUnlimited && viewStats.hasActiveMembership && (
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">
+                      of {viewStats.profileViewsLimit}
+                    </p>
+                  )}
+                </div>
+                <div className="hidden sm:flex w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-full items-center justify-center">
+                  <Crown className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />
+                </div>
+              </div>
+            </Link>
+          )}
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 md:mb-8">
-          <Link to="/recommendations" className="bg-primary text-white rounded-lg p-3 sm:p-4 flex items-center justify-between hover:bg-primary-dark transition-colors">
+          <Link
+            to="/recommendations"
+            className="text-white rounded-lg p-3 sm:p-4 flex items-center justify-between transition-colors"
+            style={{ backgroundColor: 'var(--color-primary)' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-dark)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+          >
             <span className="font-semibold text-sm sm:text-base">View Daily Matches</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -179,7 +233,13 @@ const Dashboard = () => {
             </svg>
           </Link>
 
-          <Link to="/profile/edit" className="bg-white border-2 border-primary text-primary rounded-lg p-3 sm:p-4 flex items-center justify-between hover:bg-primary hover:text-white transition-colors">
+          <Link
+            to="/profile/edit"
+            className="bg-white border-2 rounded-lg p-3 sm:p-4 flex items-center justify-between transition-colors"
+            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-primary)'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = 'var(--color-primary)'; }}
+          >
             <span className="font-semibold text-sm sm:text-base">Edit Profile</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -199,7 +259,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-3 md:gap-4">
               {topMatches.slice(0, 10).map((profile) => (
                 <ProfileCard
                   key={profile.id}
@@ -224,7 +284,7 @@ const Dashboard = () => {
           {loading ? (
             <CardSkeleton count={8} />
           ) : recommendations.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 sm:gap-3 md:gap-4">
               {recommendations.map((profile) => (
                 <ProfileCard
                   key={profile.id}

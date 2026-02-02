@@ -16,24 +16,48 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
 
   const onImageLoad = useCallback((e) => {
     const { width, height } = e.currentTarget;
+    imgRef.current = e.currentTarget;
+
     const cropWidth = Math.min(80, (height / width) * 100 * aspectRatio);
     const cropHeight = cropWidth / aspectRatio;
 
-    setCrop({
+    const newCrop = {
       unit: '%',
       width: cropWidth,
       height: cropHeight,
       x: (100 - cropWidth) / 2,
       y: (100 - cropHeight) / 2,
-    });
+    };
+
+    setCrop(newCrop);
+
+    // Also set completedCrop with pixel values so Apply works immediately
+    const pixelCrop = {
+      x: (newCrop.x / 100) * width,
+      y: (newCrop.y / 100) * height,
+      width: (newCrop.width / 100) * width,
+      height: (newCrop.height / 100) * height,
+      unit: 'px',
+    };
+    setCompletedCrop(pixelCrop);
   }, [aspectRatio]);
 
   const getCroppedImg = useCallback(async () => {
-    if (!completedCrop || !imgRef.current) {
+    const image = imgRef.current;
+
+    if (!image) {
+      console.error('No image reference found');
       return null;
     }
 
-    const image = imgRef.current;
+    // If no completedCrop, use the current crop state
+    const cropToUse = completedCrop || crop;
+
+    if (!cropToUse || !cropToUse.width || !cropToUse.height) {
+      console.error('No valid crop data found');
+      return null;
+    }
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -44,18 +68,27 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
+    // Convert percentage crop to pixels if needed
+    let cropX, cropY, cropWidth, cropHeight;
+
+    if (cropToUse.unit === '%') {
+      cropX = (cropToUse.x / 100) * image.width * scaleX;
+      cropY = (cropToUse.y / 100) * image.height * scaleY;
+      cropWidth = (cropToUse.width / 100) * image.width * scaleX;
+      cropHeight = (cropToUse.height / 100) * image.height * scaleY;
+    } else {
+      cropX = cropToUse.x * scaleX;
+      cropY = cropToUse.y * scaleY;
+      cropWidth = cropToUse.width * scaleX;
+      cropHeight = cropToUse.height * scaleY;
+    }
+
     // Set canvas size to desired output size (max 500px for profile pictures)
-    const outputSize = Math.min(500, completedCrop.width * scaleX);
+    const outputSize = Math.min(500, cropWidth);
     canvas.width = outputSize;
     canvas.height = outputSize;
 
     ctx.imageSmoothingQuality = 'high';
-
-    // Calculate the crop area
-    const cropX = completedCrop.x * scaleX;
-    const cropY = completedCrop.y * scaleY;
-    const cropWidth = completedCrop.width * scaleX;
-    const cropHeight = completedCrop.height * scaleY;
 
     // Handle rotation
     const TO_RADIANS = Math.PI / 180;
@@ -97,12 +130,20 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
         0.9
       );
     });
-  }, [completedCrop, rotation, scale]);
+  }, [completedCrop, crop, rotation, scale]);
 
   const handleCropComplete = async () => {
-    const croppedBlob = await getCroppedImg();
-    if (croppedBlob) {
-      onCropComplete(croppedBlob);
+    try {
+      const croppedBlob = await getCroppedImg();
+      if (croppedBlob) {
+        onCropComplete(croppedBlob);
+      } else {
+        console.error('Failed to create cropped image');
+        alert('Failed to crop image. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during crop:', error);
+      alert('Error cropping image. Please try again.');
     }
   };
 

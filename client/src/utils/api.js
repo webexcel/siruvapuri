@@ -59,6 +59,8 @@ export const profileAPI = {
   updatePreferences: (data) => api.put('/profile/preferences', data),
   getPreferences: () => api.get('/profile/preferences/get'),
   getProfileViewsCount: () => api.get('/profile/views/count'),
+  getViewStats: () => api.get('/profile/view-stats'),
+  checkCanViewProfile: (profileId) => api.get(`/profile/can-view/${profileId}`),
   uploadPhoto: (formData) => api.post('/profile/upload-photo', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),

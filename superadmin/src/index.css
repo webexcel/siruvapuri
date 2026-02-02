@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+
+/* Wedding Typography */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* -------------------------------------------------
+   BASE TYPOGRAPHY
+-------------------------------------------------- */
+* {
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* -------------------------------------------------
+   TAILWIND v4 THEME – SUPER ADMIN (PURPLE)
+-------------------------------------------------- */
+@theme {
+  /* Primary – Super Admin Purple */
+  --color-primary: #7C3AED;          /* Purple */
+  --color-primary-dark: #5B21B6;
+  --color-primary-light: #A78BFA;
+
+  /* Accents */
+  --color-gold: #FFF;
+  --color-gold-light: #f5e6b0;
+
+  /* Minimal traditional contrast */
+  --color-maroon: #7a1f2b;
+
+  /* Base */
+  --color-ivory: #f8fafc;
+}
+
+/* -------------------------------------------------
+   BASE STYLES
+-------------------------------------------------- */
+@layer base {
+  body {
+    @apply bg-[var(--color-ivory)] text-gray-900;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 0.02em;
+  }
+
+  /* All buttons should have pointer cursor */
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+/* -------------------------------------------------
+   COMPONENTS – SUPER ADMIN UI
+-------------------------------------------------- */
+@layer components {
+
+  /* Primary Button */
+  .btn-primary {
+    @apply
+      bg-primary
+      hover:bg-primary-dark
+      text-[var(--color-gold)]
+      font-semibold
+      px-8 py-3
+      rounded-full
+      tracking-wide
+      shadow-md
+      transition-all duration-300
+      cursor-pointer;
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply
+      border-2 border-primary
+      text-primary
+      hover:bg-primary
+      hover:text-[var(--color-gold)]
+      font-semibold
+      px-8 py-3
+      rounded-full
+      transition-all duration-300
+      cursor-pointer;
+  }
+
+  /* Input Fields */
+  .input-field {
+    @apply
+      w-full px-4 py-3
+      border border-gray-300
+      rounded-lg
+      focus:outline-none
+      focus:ring-2
+      focus:ring-primary
+      bg-white;
+  }
+
+  /* Card */
+  .card {
+    @apply
+      bg-white
+      border border-gray-200
+      rounded-2xl
+      shadow-sm
+      p-6
+      transition-all duration-300
+      hover:shadow-xl;
+  }
+
+  /* Section Heading */
+  .section-title {
+    @apply
+      text-3xl md:text-4xl
+      text-primary
+      text-center
+      font-semibold;
+  }
+
+  .section-subtitle {
+    @apply
+      text-center
+      text-gray-600
+      mt-2;
+  }
+}
