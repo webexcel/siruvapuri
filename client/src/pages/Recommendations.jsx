@@ -3,33 +3,40 @@ import { matchAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 import ProfileCard from '../components/ProfileCard';
 import CardSkeleton from '../components/CardSkeleton';
+import { Heart, Sparkles, RefreshCw, Users, Filter, ChevronDown } from 'lucide-react';
 
 const Recommendations = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [limit, setLimit] = useState(20);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     fetchRecommendations();
-  }, [limit]);
+  }, []);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = async (newLimit = limit) => {
     try {
-      setLoading(true);
+      if (newLimit > limit) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
-      const response = await matchAPI.getRecommendations(limit);
+      const response = await matchAPI.getRecommendations(newLimit);
       setRecommendations(response.data.recommendations || []);
+      setLimit(newLimit);
     } catch (err) {
       console.error('Error fetching recommendations:', err);
       const errorMsg = err.response?.data?.error || 'Failed to fetch recommendations';
       setError(errorMsg);
-      // Don't show error toast for specific user status errors
       if (!errorMsg.includes('not eligible') && !errorMsg.includes('Complete your profile')) {
         showError(errorMsg);
       }
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -37,79 +44,187 @@ const Recommendations = () => {
     try {
       await matchAPI.sendInterest({ receiver_id: profileId });
       showSuccess('Interest sent successfully!');
-      // Optionally remove from recommendations
       setRecommendations(recommendations.filter(r => r.id !== profileId));
     } catch (error) {
       showError(error.response?.data?.error || 'Failed to send interest');
-      throw error; // Re-throw to let ProfileCard know it failed
+      throw error;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-1 sm:mb-2">
-            Daily Recommendations
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Profiles specially selected for you based on your preferences
-          </p>
-        </div>
+  const handleLoadMore = () => {
+    fetchRecommendations(limit + 20);
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-primary via-primary-dark to-primary relative overflow-hidden">
+        <div className="absolute inset-0 opacity-50" style={{backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.22676 0C1.91374 0 2.45351 0.539773 2.45351 1.22676C2.45351 1.91374 1.91374 2.45351 1.22676 2.45351C0.539773 2.45351 0 1.91374 0 1.22676C0 0.539773 0.539773 0 1.22676 0Z' fill='rgba(255,255,255,0.07)'%3E%3C/path%3E%3C/svg%3E\")"}}></div>
+        <div className="container mx-auto px-4 py-8 sm:py-12 relative">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  Daily Recommendations
+                </h1>
+              </div>
+              <p className="text-white/80 text-sm sm:text-base ml-0 sm:ml-15">
+                Handpicked profiles matching your preferences
+              </p>
+            </div>
+            <button
+              onClick={() => fetchRecommendations(limit)}
+              disabled={loading}
+              className="flex items-center gap-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2.5 rounded-xl transition-all text-sm font-medium"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
+        </div>
+        {/* Decorative wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 60V30C240 10 480 0 720 10C960 20 1200 40 1440 30V60H0Z" fill="white" fillOpacity="0.1"/>
+            <path d="M0 60V40C240 20 480 10 720 20C960 30 1200 50 1440 40V60H0Z" className="fill-gray-50"/>
+          </svg>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         {loading ? (
           <CardSkeleton count={8} />
         ) : recommendations.length > 0 ? (
           <>
-            <div className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-600">
-              Showing {recommendations.length} profiles
+            {/* Stats Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Users size={20} className="text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Showing</p>
+                  <p className="text-lg font-bold text-gray-800">{recommendations.length} <span className="text-sm font-normal text-gray-500">profiles</span></p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Sorted by</span>
+                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full">
+                  <Heart size={12} />
+                  Best Match
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
-              {recommendations.map((profile) => (
-                <ProfileCard
+            {/* Profile Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 mb-8">
+              {recommendations.map((profile, index) => (
+                <div
                   key={profile.id}
-                  profile={profile}
-                  showMatchScore={true}
-                  onInterestSent={handleInterestSent}
-                />
+                  className="animate-fadeIn"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <ProfileCard
+                    profile={profile}
+                    showMatchScore={true}
+                    onInterestSent={handleInterestSent}
+                  />
+                </div>
               ))}
             </div>
 
+            {/* Load More */}
             {recommendations.length >= limit && (
               <div className="text-center">
                 <button
-                  onClick={() => setLimit(limit + 20)}
-                  className="btn-primary text-sm sm:text-base py-2 sm:py-2.5 px-4 sm:px-6"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50"
                 >
-                  Load More Profiles
+                  {loadingMore ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={18} />
+                      Load More Profiles
+                    </>
+                  )}
                 </button>
               </div>
             )}
           </>
         ) : error ? (
-          <div className="card text-center py-8 sm:py-12 px-4">
-            <svg className="w-12 h-12 sm:w-16 sm:h-16 text-red-400 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Unable to Load Recommendations</h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">{error}</p>
-            <button onClick={() => fetchRecommendations()} className="btn-primary text-sm sm:text-base">
-              Try Again
-            </button>
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Unable to Load Recommendations</h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <button
+                onClick={() => fetchRecommendations()}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                <RefreshCw size={18} />
+                Try Again
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="card text-center py-8 sm:py-12 px-4">
-            <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No Recommendations Yet</h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-4">
-              We're working on finding the best matches for you. Check back soon!
-            </p>
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/40 rounded-full flex items-center justify-center mx-auto mb-5">
+                <Users className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">No Recommendations Yet</h3>
+              <p className="text-gray-600 mb-6">
+                We're working on finding the best matches for you. Complete your profile and preferences to get better recommendations!
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => fetchRecommendations()}
+                  className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-xl font-medium transition-all"
+                >
+                  <RefreshCw size={16} />
+                  Refresh
+                </button>
+                <a
+                  href="/profile/edit"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-dark text-white px-5 py-2.5 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all"
+                >
+                  Complete Profile
+                </a>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* CSS for animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
     </div>
   );
 };

@@ -25,7 +25,7 @@ const SafetyTips = () => {
       ]
     },
     {
-      icon: <Users className="text-green-500" size={28} />,
+      icon: <Users className="text-primary" size={28} />,
       title: 'Meeting in Person',
       tips: [
         'Always meet in a public place for the first few meetings.',

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import Swal from "sweetalert2";
+import { showError } from "../utils/sweetalert";
 import { Mail, Lock, Shield, Eye, EyeOff } from "lucide-react";
 import {
   motion,
@@ -299,20 +299,10 @@ const Login = () => {
       if (result.success) {
         navigate("/dashboard");
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: result.error || "Invalid email or password",
-          confirmButtonColor: "#ef4444",
-        });
+        showError(result.error || "Invalid email or password", "Login Failed");
       }
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong",
-        text: "Unable to login. Please try again later.",
-        confirmButtonColor: "#ef4444",
-      });
+      showError("Unable to login. Please try again later.", "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -490,7 +480,7 @@ const Login = () => {
                       {[1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white bg-gradient-to-br from-primary to-green-400 flex items-center justify-center text-white text-xs font-semibold"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white text-xs font-semibold"
                         >
                           {String.fromCharCode(64 + i)}
                         </div>
@@ -539,7 +529,7 @@ const Login = () => {
                         <Mail className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="email"
+                        type="text"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
@@ -596,7 +586,10 @@ const Login = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full cursor-pointer bg-primary hover:bg-primary-dark text-white font-semibold py-3 sm:py-3.5 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2 text-sm sm:text-base"
+                      className="w-full cursor-pointer text-white font-semibold py-3 sm:py-3.5 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2 text-sm sm:text-base"
+                      style={{ backgroundColor: 'var(--color-primary)' }}
+                      onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = 'var(--color-primary-dark)')}
+                      onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = 'var(--color-primary)')}
                     >
                       {loading ? (
                         <>

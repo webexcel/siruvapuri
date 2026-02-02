@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminAuthAPI } from '../utils/adminApi';
-import { showSuccess } from '../utils/sweetalert';
-import { Shield, AlertCircle } from 'lucide-react';
+import { showSuccess, showError } from '../utils/sweetalert';
+import { Shield } from 'lucide-react';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -10,11 +10,18 @@ const AdminLogin = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const isAdmin = localStorage.getItem('isAdmin');
+    if (token && isAdmin === 'true') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleChange = (e) => {
-    setError(''); // Clear error when user types
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
@@ -24,7 +31,6 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     try {
       const response = await adminAuthAPI.login(formData);
@@ -32,13 +38,12 @@ const AdminLogin = () => {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('isAdmin', 'true');
-        showSuccess('Welcome to Admin Panel!');
-        navigate('/dashboard');
+        await showSuccess('Welcome to Admin Panel!');
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       const errorMsg = error.response?.data?.error || 'Invalid email or password. Please try again.';
-      setError(errorMsg);
-      console.error('Admin login error:', error);
+      showError(errorMsg, 'Login Failed');
     } finally {
       setLoading(false);
     }
@@ -59,17 +64,6 @@ const AdminLogin = () => {
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
-                <div>
-                  <p className="text-red-800 font-medium text-sm">{error}</p>
-                  <p className="text-red-600 text-xs mt-1">Please check your credentials and try again.</p>
-                </div>
-              </div>
-            )}
-
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Admin Email
@@ -80,7 +74,7 @@ const AdminLogin = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`input-field ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
+                className="input-field"
                 placeholder="admin@siruvapuri.com"
                 required
               />
@@ -96,7 +90,7 @@ const AdminLogin = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`input-field ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
+                className="input-field"
                 placeholder="Enter admin password"
                 required
               />

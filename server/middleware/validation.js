@@ -11,7 +11,17 @@ const validateRegistration = [
 ];
 
 const validateLogin = [
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('email')
+    .notEmpty().withMessage('Email or phone number is required')
+    .custom((value) => {
+      // Check if it's a valid email or a 10-digit phone number
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      const isPhone = /^\d{10}$/.test(value);
+      if (!isEmail && !isPhone) {
+        throw new Error('Please enter a valid email address or 10-digit phone number');
+      }
+      return true;
+    }),
   body('password').notEmpty().withMessage('Password is required')
 ];
 

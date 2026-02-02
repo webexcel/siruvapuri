@@ -70,7 +70,7 @@ const getDailyRecommendations = async (req, res) => {
         p.city
       FROM users u
       LEFT JOIN profiles p ON u.id = p.user_id
-      WHERE u.id = $1
+      WHERE u.id = ?
       `,
       [userId]
     );
@@ -82,7 +82,7 @@ const getDailyRecommendations = async (req, res) => {
     const user = currentUserResult.rows[0];
 
     /* ---------------------------------------
-       2. Eligibility checks (VERY IMPORTANT)
+       2. Eligibility checks
     ---------------------------------------- */
     if (!user.gender) {
       return res.status(400).json({
@@ -90,9 +90,10 @@ const getDailyRecommendations = async (req, res) => {
       });
     }
 
-    if (!user.is_approved || user.payment_status !== 'paid') {
+    // Only require paid status OR approved status (more lenient)
+    if (user.payment_status !== 'paid' && !user.is_approved) {
       return res.status(403).json({
-        error: 'User not eligible for recommendations'
+        error: 'User not eligible for recommendations. Please complete payment or wait for approval.'
       });
     }
 
@@ -100,7 +101,7 @@ const getDailyRecommendations = async (req, res) => {
        3. Fetch preferences (optional)
     ---------------------------------------- */
     const preferencesResult = await db.query(
-      'SELECT * FROM preferences WHERE user_id = $1',
+      'SELECT * FROM preferences WHERE user_id = ?',
       [userId]
     );
 
@@ -116,7 +117,7 @@ const getDailyRecommendations = async (req, res) => {
       `
       SELECT
         u.id,
-        u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name AS full_name,
+        CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) AS full_name,
         u.gender,
         u.age,
         u.membership_type,
@@ -143,14 +144,13 @@ const getDailyRecommendations = async (req, res) => {
         p.hobbies
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
-      WHERE u.gender = $1
-        AND u.id <> $2
-        AND u.is_approved = true
-        AND u.payment_status = 'paid'
+      WHERE u.gender = ?
+        AND u.id <> ?
+        AND (u.is_approved = true OR u.payment_status = 'paid')
         AND u.id NOT IN (
-          SELECT matched_user_id FROM matches WHERE user_id = $3
+          SELECT matched_user_id FROM matches WHERE user_id = ?
           UNION
-          SELECT receiver_id FROM interests WHERE sender_id = $4
+          SELECT receiver_id FROM interests WHERE sender_id = ?
         )
       LIMIT 50
       `,
@@ -186,13 +186,13 @@ const searchProfiles = async (req, res) => {
     const userId = req.userId;
     const {
       age_min, age_max, height_min, height_max,
-      religion, education, city, marital_status,
-      limit = 20, offset = 0
+      religion, caste, city, marital_status,
+      limit = 50, offset = 0
     } = req.query;
 
     let query = `
       SELECT u.id,
-             u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+             CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
              u.gender, u.age, u.membership_type,
              CASE
                WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
@@ -203,84 +203,77 @@ const searchProfiles = async (req, res) => {
              p.about_me, p.profile_picture, p.looking_for, p.hobbies
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
-      WHERE u.id != $1
+      WHERE u.id != ?
       AND u.is_approved = true
       AND u.payment_status = 'paid'
       AND u.id NOT IN (
-        SELECT receiver_id FROM interests WHERE sender_id = $1
+        SELECT receiver_id FROM interests WHERE sender_id = ?
       )
     `;
 
-    const params = [userId];
-    let paramIndex = 2;
+    const params = [userId, userId];
 
     // Get current user gender and determine opposite gender
-    const currentUserResult = await db.query('SELECT gender FROM users WHERE id = $1', [userId]);
+    const currentUserResult = await db.query('SELECT gender FROM users WHERE id = ?', [userId]);
     const userGender = currentUserResult.rows[0]?.gender;
     const oppositeGender = userGender === 'male' ? 'female' : 'male';
 
-    query += ` AND u.gender = $${paramIndex}`;
+    query += ` AND u.gender = ?`;
     params.push(oppositeGender);
-    paramIndex++;
 
     if (age_min) {
-      query += ` AND u.age >= $${paramIndex}`;
+      query += ` AND u.age >= ?`;
       params.push(age_min);
-      paramIndex++;
     }
 
     if (age_max) {
-      query += ` AND u.age <= $${paramIndex}`;
+      query += ` AND u.age <= ?`;
       params.push(age_max);
-      paramIndex++;
     }
 
     if (height_min) {
-      query += ` AND p.height >= $${paramIndex}`;
+      query += ` AND p.height >= ?`;
       params.push(height_min);
-      paramIndex++;
     }
 
     if (height_max) {
-      query += ` AND p.height <= $${paramIndex}`;
+      query += ` AND p.height <= ?`;
       params.push(height_max);
-      paramIndex++;
     }
 
     if (religion) {
-      query += ` AND p.religion = $${paramIndex}`;
+      query += ` AND p.religion = ?`;
       params.push(religion);
-      paramIndex++;
     }
 
-    if (education) {
-      query += ` AND p.education LIKE $${paramIndex}`;
-      params.push(`%${education}%`);
-      paramIndex++;
+    if (caste) {
+      query += ` AND p.caste LIKE ?`;
+      params.push(`%${caste}%`);
     }
 
     if (city) {
-      query += ` AND p.city LIKE $${paramIndex}`;
+      query += ` AND p.city LIKE ?`;
       params.push(`%${city}%`);
-      paramIndex++;
     }
 
     if (marital_status) {
-      query += ` AND p.marital_status = $${paramIndex}`;
+      query += ` AND p.marital_status = ?`;
       params.push(marital_status);
-      paramIndex++;
     }
 
-    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(parseInt(limit), parseInt(offset));
+    // MySQL prepared statements don't work well with LIMIT/OFFSET as parameters
+    // So we embed them directly (they're already sanitized as integers)
+    const limitInt = parseInt(limit) || 50;
+    const offsetInt = parseInt(offset) || 0;
+    query += ` ORDER BY u.id DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
 
     const result = await db.query(query, params);
 
     res.json({
       profiles: result.rows,
       total: result.rows.length,
-      limit: parseInt(limit),
-      offset: parseInt(offset)
+      limit: limitInt,
+      offset: offsetInt
     });
   } catch (error) {
     console.error('Search profiles error:', error);
@@ -306,7 +299,7 @@ const sendInterest = async (req, res) => {
 
     // Check if receiver exists
     const receiverCheck = await db.query(
-      'SELECT id FROM users WHERE id = $1',
+      'SELECT id FROM users WHERE id = ?',
       [receiverId]
     );
 
@@ -316,7 +309,7 @@ const sendInterest = async (req, res) => {
 
     // Check if interest already exists
     const existingResult = await db.query(
-      'SELECT id FROM interests WHERE sender_id = $1 AND receiver_id = $2',
+      'SELECT id FROM interests WHERE sender_id = ? AND receiver_id = ?',
       [senderId, receiverId]
     );
 
@@ -326,25 +319,25 @@ const sendInterest = async (req, res) => {
 
     // Get sender details
     const senderResult = await db.query(
-      `SELECT u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+      `SELECT CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.age, p.city, p.education
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = $1`,
+       WHERE u.id = ?`,
       [senderId]
     );
 
     // Get receiver details
     const receiverResult = await db.query(
       `SELECT u.email,
-              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name
+              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name
        FROM users u
-       WHERE u.id = $1`,
+       WHERE u.id = ?`,
       [receiverId]
     );
 
     await db.query(
-      'INSERT INTO interests (sender_id, receiver_id, message) VALUES ($1, $2, $3)',
+      'INSERT INTO interests (sender_id, receiver_id, message) VALUES (?, ?, ?)',
       [senderId, receiverId, message || '']
     );
 
@@ -384,14 +377,14 @@ const getReceivedInterests = async (req, res) => {
 
     const result = await db.query(
       `SELECT i.id, i.sender_id, i.status, i.message, i.created_at,
-              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.gender, u.age, u.membership_type,
               CASE WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true ELSE false END as is_membership_active,
               p.city, p.education, p.occupation, p.profile_picture
        FROM interests i
        INNER JOIN users u ON i.sender_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE i.receiver_id = $1
+       WHERE i.receiver_id = ?
        ORDER BY i.created_at DESC`,
       [userId]
     );
@@ -410,14 +403,14 @@ const getSentInterests = async (req, res) => {
 
     const result = await db.query(
       `SELECT i.id, i.receiver_id, i.status, i.message, i.created_at,
-              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.gender, u.age, u.membership_type,
               CASE WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true ELSE false END as is_membership_active,
               p.city, p.education, p.occupation, p.profile_picture
        FROM interests i
        INNER JOIN users u ON i.receiver_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE i.sender_id = $1
+       WHERE i.sender_id = ?
        ORDER BY i.created_at DESC`,
       [userId]
     );
@@ -443,12 +436,12 @@ const respondToInterest = async (req, res) => {
     const interestResult = await db.query(
       `SELECT i.*,
               sender.email as sender_email,
-              sender.first_name || COALESCE(' ' || sender.middle_name, '') || ' ' || sender.last_name as sender_name,
-              receiver.first_name || COALESCE(' ' || receiver.middle_name, '') || ' ' || receiver.last_name as receiver_name
+              CONCAT(sender.first_name, COALESCE(CONCAT(' ', sender.middle_name), ''), ' ', sender.last_name) as sender_name,
+              CONCAT(receiver.first_name, COALESCE(CONCAT(' ', receiver.middle_name), ''), ' ', receiver.last_name) as receiver_name
        FROM interests i
        JOIN users sender ON i.sender_id = sender.id
        JOIN users receiver ON i.receiver_id = receiver.id
-       WHERE i.id = $1 AND i.receiver_id = $2`,
+       WHERE i.id = ? AND i.receiver_id = ?`,
       [interest_id, userId]
     );
 
@@ -459,7 +452,7 @@ const respondToInterest = async (req, res) => {
     const interest = interestResult.rows[0];
 
     await db.query(
-      'UPDATE interests SET status = $1 WHERE id = $2',
+      'UPDATE interests SET status = ? WHERE id = ?',
       [status, interest_id]
     );
 
@@ -496,7 +489,7 @@ const getTopMatches = async (req, res) => {
         m.status as match_status,
         m.created_at as matched_at,
         u.id,
-        u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+        CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
         u.gender, u.age,
         p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
         p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
@@ -504,7 +497,7 @@ const getTopMatches = async (req, res) => {
        FROM matches m
        INNER JOIN users u ON m.matched_user_id = u.id
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE m.user_id = $1
+       WHERE m.user_id = ?
        ORDER BY m.match_score DESC, m.created_at DESC
        LIMIT 10`,
       [userId]
@@ -517,9 +510,99 @@ const getTopMatches = async (req, res) => {
   }
 };
 
+// Public search - returns profiles with sensitive info redacted
+const publicSearchProfiles = async (req, res) => {
+  try {
+    const {
+      age_min, age_max,
+      religion, caste, city, marital_status, gender,
+      limit = 50, offset = 0
+    } = req.query;
+
+    let query = `
+      SELECT u.id,
+             CONCAT(u.first_name, ' ', LEFT(u.last_name, 1), '.') as full_name,
+             u.gender, u.age,
+             p.height, p.marital_status, p.religion, p.caste,
+             p.education, p.occupation,
+             p.city, p.state, p.country,
+             p.about_me, p.profile_picture
+      FROM users u
+      INNER JOIN profiles p ON u.id = p.user_id
+      WHERE u.is_approved = true
+      AND u.payment_status = 'paid'
+    `;
+
+    const params = [];
+
+    if (gender) {
+      query += ` AND u.gender = ?`;
+      params.push(gender);
+    }
+
+    if (age_min) {
+      query += ` AND u.age >= ?`;
+      params.push(age_min);
+    }
+
+    if (age_max) {
+      query += ` AND u.age <= ?`;
+      params.push(age_max);
+    }
+
+    if (religion) {
+      query += ` AND p.religion = ?`;
+      params.push(religion);
+    }
+
+    if (caste) {
+      query += ` AND p.caste LIKE ?`;
+      params.push(`%${caste}%`);
+    }
+
+    if (city) {
+      query += ` AND p.city LIKE ?`;
+      params.push(`%${city}%`);
+    }
+
+    if (marital_status) {
+      query += ` AND p.marital_status = ?`;
+      params.push(marital_status);
+    }
+
+    // MySQL prepared statements don't work well with LIMIT/OFFSET as parameters
+    // So we embed them directly (they're already sanitized as integers)
+    const limitInt = parseInt(limit) || 50;
+    const offsetInt = parseInt(offset) || 0;
+    query += ` ORDER BY u.created_at DESC LIMIT ${limitInt} OFFSET ${offsetInt}`;
+
+    const result = await db.query(query, params.length > 0 ? params : undefined);
+
+    // Redact sensitive information - replace with placeholder
+    const profiles = result.rows.map(profile => ({
+      ...profile,
+      // These will be shown as blurred/hidden in frontend
+      phone: '**********',
+      email: '***@***.com',
+      full_address: 'Register to view'
+    }));
+
+    res.json({
+      profiles,
+      total: profiles.length,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+  } catch (error) {
+    console.error('Public search profiles error:', error);
+    res.status(500).json({ error: 'Failed to search profiles' });
+  }
+};
+
 module.exports = {
   getDailyRecommendations,
   searchProfiles,
+  publicSearchProfiles,
   sendInterest,
   getReceivedInterests,
   getSentInterests,

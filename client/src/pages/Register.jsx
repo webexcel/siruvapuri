@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../utils/api';
+import { useModules } from '../context/ModuleContext';
 import { showSuccess, showError } from '../utils/sweetalert';
-import { User, Mail, Phone, Calendar, Users, Shield, Lock } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Users, Shield, Lock, Crown, Star, Award, Check } from 'lucide-react';
 import {
   motion,
   useScroll,
@@ -239,6 +240,8 @@ const ParallaxLayer = ({
 
 const Register = () => {
   const location = useLocation();
+  const { isModuleEnabled } = useModules();
+  const isMembershipEnabled = isModuleEnabled('membership');
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -247,7 +250,45 @@ const Register = () => {
     phone: '',
     age: '',
     gender: '',
+    interested_membership: '',
   });
+
+  // Membership plans data
+  const membershipPlans = [
+    {
+      id: 'gold',
+      name: 'Gold',
+      price: '₹2,999',
+      duration: '3 Months',
+      icon: Award,
+      color: 'from-yellow-400 to-yellow-600',
+      borderColor: 'border-yellow-400',
+      bgColor: 'bg-yellow-50',
+      features: ['View 50 Profiles', 'Send 25 Interests', 'Chat Support'],
+    },
+    {
+      id: 'platinum',
+      name: 'Platinum',
+      price: '₹4,999',
+      duration: '6 Months',
+      icon: Star,
+      color: 'from-gray-400 to-gray-600',
+      borderColor: 'border-gray-400',
+      bgColor: 'bg-gray-50',
+      features: ['View 150 Profiles', 'Send 75 Interests', 'Priority Support', 'Profile Highlight'],
+    },
+    {
+      id: 'premium',
+      name: 'Premium',
+      price: '₹7,999',
+      duration: '12 Months',
+      icon: Crown,
+      color: 'from-purple-500 to-purple-700',
+      borderColor: 'border-purple-500',
+      bgColor: 'bg-purple-50',
+      features: ['Unlimited Profiles', 'Unlimited Interests', '24/7 Support', 'Verified Badge'],
+    },
+  ];
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const prefersReducedMotion = useReducedMotion();
@@ -664,7 +705,7 @@ const Register = () => {
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base bg-white appearance-none cursor-pointer"
                         required
                       >
-                        <option value="" className='hover:bg-green-500'>Select Gender</option>
+                        <option value="" className='hover:bg-primary-light'>Select Gender</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                       </select>
@@ -675,6 +716,90 @@ const Register = () => {
                       </div>
                     </div>
                   </motion.div>
+
+                  {/* Membership Interest - Optional - Only show if membership module is enabled */}
+                  {isMembershipEnabled && (
+                    <motion.div variants={itemVariants}>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Interested Membership <span className="text-gray-400 font-normal">(optional)</span>
+                      </label>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Choose a plan you're interested in. You can decide later after registration.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {membershipPlans.map((plan) => {
+                          const Icon = plan.icon;
+                          const isSelected = formData.interested_membership === plan.id;
+                          return (
+                            <motion.label
+                              key={plan.id}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className={`relative cursor-pointer rounded-xl border-2 p-3 sm:p-4 transition-all duration-200 ${
+                                isSelected
+                                  ? `${plan.borderColor} ${plan.bgColor} shadow-md`
+                                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="interested_membership"
+                                value={plan.id}
+                                checked={isSelected}
+                                onChange={handleChange}
+                                className="sr-only"
+                              />
+
+                              {/* Selected indicator */}
+                              {isSelected && (
+                                <div className={`absolute top-2 right-2 w-5 h-5 rounded-full bg-gradient-to-r ${plan.color} flex items-center justify-center`}>
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+
+                              {/* Plan Icon & Name */}
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${plan.color} flex items-center justify-center`}>
+                                  <Icon className="w-4 h-4 text-white" />
+                                </div>
+                                <span className="font-semibold text-gray-800 text-sm">{plan.name}</span>
+                              </div>
+
+                              {/* Price & Duration */}
+                              <div className="mb-2">
+                                <span className="text-lg font-bold text-gray-900">{plan.price}</span>
+                                <span className="text-xs text-gray-500 ml-1">/ {plan.duration}</span>
+                              </div>
+
+                              {/* Features (truncated for mobile) */}
+                              <ul className="space-y-1 hidden sm:block">
+                                {plan.features.slice(0, 2).map((feature, idx) => (
+                                  <li key={idx} className="flex items-center gap-1.5 text-xs text-gray-600">
+                                    <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    <span className="truncate">{feature}</span>
+                                  </li>
+                                ))}
+                                {plan.features.length > 2 && (
+                                  <li className="text-xs text-gray-400">+{plan.features.length - 2} more</li>
+                                )}
+                              </ul>
+                            </motion.label>
+                          );
+                        })}
+                      </div>
+
+                      {/* Clear Selection */}
+                      {formData.interested_membership && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, interested_membership: '' }))}
+                          className="mt-2 text-xs text-gray-500 hover:text-gray-700 underline"
+                        >
+                          Clear selection
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
 
                   {/* Info Note */}
                   <motion.div

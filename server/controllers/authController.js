@@ -10,28 +10,34 @@ const otpStore = new Map();
 // Register new user (without password, admin will set it)
 const register = async (req, res) => {
   try {
-    const { email, first_name, middle_name, last_name, phone, age, gender } = req.body;
+    const { email, first_name, middle_name, last_name, phone, age, gender, interested_membership } = req.body;
 
-    // Check if user already exists
-    const existingUsers = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    // Check if email already exists
+    const existingUsers = await db.query('SELECT id FROM users WHERE email = ?', [email]);
 
     if (existingUsers.rows.length > 0) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
+    // Check if phone number already exists
+    const existingPhone = await db.query('SELECT id FROM users WHERE phone = ?', [phone]);
+
+    if (existingPhone.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'Phone number already registered' });
+    }
+
     // Insert user without password (admin will set it later)
     const result = await db.query(
-      `INSERT INTO users (email, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'unpaid', false)
-       RETURNING id, email, first_name, middle_name, last_name`,
-      [email, first_name, middle_name || null, last_name, phone, age, gender]
+      `INSERT INTO users (email, first_name, middle_name, last_name, phone, age, gender, interested_membership, payment_status, is_approved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', false)`,
+      [email, first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
     );
 
-    const userId = result.rows[0].id;
+    const userId = result.rows.insertId;
 
     // Create empty profile and preferences
-    await db.query('INSERT INTO profiles (user_id) VALUES ($1)', [userId]);
-    await db.query('INSERT INTO preferences (user_id) VALUES ($1)', [userId]);
+    await db.query('INSERT INTO profiles (user_id) VALUES (?)', [userId]);
+    await db.query('INSERT INTO preferences (user_id) VALUES (?)', [userId]);
 
     // Send welcome email
     const fullName = `${first_name} ${last_name}`;
@@ -40,7 +46,7 @@ const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Registration successful! Admin will review and set your password.',
-      user: result.rows[0]
+      user: { id: userId, email, first_name, middle_name, last_name }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -53,8 +59,16 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const users = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    // Find user by email or phone number
+    // Check if input looks like a phone number (10 digits)
+    const isPhoneNumber = /^\d{10}$/.test(email);
+
+    let users;
+    if (isPhoneNumber) {
+      users = await db.query('SELECT * FROM users WHERE phone = ?', [email]);
+    } else {
+      users = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    }
 
     if (users.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -110,7 +124,7 @@ const getCurrentUser = async (req, res) => {
   try {
     const users = await db.query(
       `SELECT u.id, u.email,
-              u.first_name || COALESCE(' ' || u.middle_name, '') || ' ' || u.last_name as full_name,
+              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.first_name, u.middle_name, u.last_name,
               u.phone, u.gender, u.age, u.created_at,
               u.membership_type, u.membership_expiry,
@@ -118,12 +132,23 @@ const getCurrentUser = async (req, res) => {
                 WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
                 ELSE false
               END as is_membership_active,
-              p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
-              p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
+              p.date_of_birth, p.birth_place,
+              p.height, p.weight, p.complexion, p.blood_group, p.physical_status,
+              p.marital_status, p.religion, p.caste, p.sub_caste, p.mother_tongue,
+              p.education, p.education_detail, p.occupation, p.company_name, p.working_place,
+              p.annual_income, p.monthly_income,
+              p.time_of_birth, p.rasi, p.nakshatra, p.lagnam, p.kothram, p.dosham, p.matching_stars,
+              p.father_name, p.father_occupation, p.father_status,
+              p.mother_name, p.mother_occupation, p.mother_status,
+              p.brothers_count, p.brothers_married, p.sisters_count, p.sisters_married,
+              p.family_type, p.family_status, p.own_house, p.native_place,
+              p.address, p.city, p.state, p.country, p.pincode,
+              p.expected_age_min, p.expected_age_max, p.expected_qualification,
+              p.expected_location, p.expected_income,
               p.about_me, p.profile_picture, p.looking_for, p.hobbies, p.created_by
        FROM users u
        LEFT JOIN profiles p ON u.id = p.user_id
-       WHERE u.id = $1`,
+       WHERE u.id = ?`,
       [req.userId]
     );
 
@@ -155,7 +180,7 @@ const requestPasswordReset = async (req, res) => {
     // Find user by email
     const users = await db.query(
       `SELECT id, email, first_name, last_name, is_approved, payment_status
-       FROM users WHERE email = $1`,
+       FROM users WHERE email = ?`,
       [email]
     );
 
@@ -282,7 +307,7 @@ const resetPassword = async (req, res) => {
 
     // Update password in database
     await db.query(
-      'UPDATE users SET password = $1, plain_password = $2 WHERE id = $3',
+      'UPDATE users SET password = ?, plain_password = ? WHERE id = ?',
       [hashedPassword, newPassword, storedData.userId]
     );
 
@@ -291,7 +316,7 @@ const resetPassword = async (req, res) => {
 
     // Send success email
     const users = await db.query(
-      'SELECT first_name, last_name FROM users WHERE id = $1',
+      'SELECT first_name, last_name FROM users WHERE id = ?',
       [storedData.userId]
     );
 

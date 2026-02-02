@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, Star, Award, Check, Heart } from 'lucide-react';
+import { Crown, Star, Award, Check, Heart, MapPin, Briefcase, GraduationCap, User } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { useModules } from '../context/ModuleContext';
 
-// Membership Badge Component
-const MembershipBadge = ({ membershipType, isActive }) => {
+// Membership Badge Component - Dynamically controlled by superadmin module settings
+const MembershipBadge = ({ membershipType, isActive, isMembershipEnabled }) => {
+  // Check if membership module is enabled
+  if (!isMembershipEnabled) return null;
   if (!membershipType || !isActive) return null;
 
   const badges = {
-    gold: { icon: Award, color: 'bg-yellow-500', label: 'Gold' },
-    platinum: { icon: Star, color: 'bg-gray-400', label: 'Platinum' },
-    premium: { icon: Crown, color: 'bg-purple-500', label: 'Premium' }
+    gold: { icon: Award, gradient: 'from-yellow-400 to-amber-500', label: 'Gold' },
+    platinum: { icon: Star, gradient: 'from-gray-400 to-gray-600', label: 'Platinum' },
+    premium: { icon: Crown, gradient: 'from-purple-500 to-purple-700', label: 'Premium' }
   };
 
   const badge = badges[membershipType?.toLowerCase()];
@@ -18,17 +22,41 @@ const MembershipBadge = ({ membershipType, isActive }) => {
   const Icon = badge.icon;
 
   return (
-    <div className={`${badge.color} text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shadow-md flex items-center gap-0.5 sm:gap-1`}>
-      <Icon size={12} />
+    <div className={`bg-gradient-to-r ${badge.gradient} text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg shadow-lg flex items-center gap-1`}>
+      <Icon size={12} className="sm:w-3.5 sm:h-3.5" />
       <span className="hidden sm:inline">{badge.label}</span>
+    </div>
+  );
+};
+
+// Match Score Badge
+const MatchScoreBadge = ({ score }) => {
+  const getScoreConfig = (score) => {
+    if (score >= 80) return { gradient: 'from-emerald-400 to-emerald-600', text: 'Excellent' };
+    if (score >= 60) return { gradient: 'from-blue-400 to-blue-600', text: 'Good' };
+    if (score >= 40) return { gradient: 'from-amber-400 to-amber-600', text: 'Fair' };
+    return { gradient: 'from-orange-400 to-orange-600', text: 'Low' };
+  };
+
+  const config = getScoreConfig(score);
+
+  return (
+    <div className={`bg-gradient-to-r ${config.gradient} text-white text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-lg`}>
+      {score}%
     </div>
   );
 };
 
 const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const { isModuleEnabled } = useModules();
+  const isMembershipEnabled = isModuleEnabled('membership');
   const [sendingInterest, setSendingInterest] = useState(false);
   const [interestSent, setInterestSent] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const avatarBgColor = theme?.primary?.replace('#', '') || '8B1538';
 
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return 'N/A';
@@ -46,7 +74,8 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
     navigate(`/profile/${profile.id}`);
   };
 
-  const handleSendInterest = async () => {
+  const handleSendInterest = async (e) => {
+    e.stopPropagation();
     if (sendingInterest || interestSent) return;
 
     setSendingInterest(true);
@@ -60,101 +89,128 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
     }
   };
 
-  const getMatchScoreColor = (score) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-primary';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-orange-600';
-  };
+  const age = profile.age || calculateAge(profile.date_of_birth);
 
   return (
-    <div className="card p-2 sm:p-3 hover:shadow-lg transition-shadow duration-200">
-      <div className="relative">
+    <div
+      className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleViewProfile}
+    >
+      {/* Image Container */}
+      <div className="relative aspect-[4/5] overflow-hidden">
         <img
-          src={profile.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`}
+          src={profile.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=400&background=${avatarBgColor}&color=fff`}
           alt={profile.full_name}
-          className="w-full h-40 sm:h-48 md:h-52 object-cover rounded-lg mb-2 sm:mb-3"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=300&background=00D26A&color=fff`;
+            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name || 'User')}&size=400&background=${avatarBgColor}&color=fff`;
           }}
         />
-        {showMatchScore && profile.match_score !== undefined && (
-          <div className="absolute top-1.5 right-1.5 bg-white rounded-full px-1.5 sm:px-2 py-0.5 shadow-md">
-            <span className={`font-bold text-xs sm:text-sm ${getMatchScoreColor(profile.match_score)}`}>
-              {profile.match_score}%
-            </span>
-          </div>
-        )}
-        {profile.membership_type && profile.is_membership_active && (
-          <div className="absolute top-1.5 left-1.5">
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+        {/* Top Badges */}
+        <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
+          {isMembershipEnabled && profile.membership_type && profile.is_membership_active && (
             <MembershipBadge
               membershipType={profile.membership_type}
               isActive={profile.is_membership_active}
+              isMembershipEnabled={isMembershipEnabled}
             />
+          )}
+          {showMatchScore && profile.match_score !== undefined && (
+            <div className={`${!(isMembershipEnabled && profile.membership_type) ? 'ml-auto' : ''}`}>
+              <MatchScoreBadge score={profile.match_score} />
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Info Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+          <h3 className="text-white font-bold text-sm sm:text-base truncate mb-1">
+            {profile.full_name}
+          </h3>
+          <div className="flex items-center gap-1.5 text-white/90 text-[10px] sm:text-xs">
+            <User size={12} className="flex-shrink-0" />
+            <span>{age} yrs</span>
+            {profile.height && (
+              <>
+                <span className="text-white/50">•</span>
+                <span>{profile.height}cm</span>
+              </>
+            )}
+            {profile.city && (
+              <>
+                <span className="text-white/50 hidden sm:inline">•</span>
+                <span className="hidden sm:inline truncate">{profile.city}</span>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="space-y-1">
-        <h3 className="text-sm sm:text-base font-bold text-gray-800 truncate">{profile.full_name}</h3>
-
-        <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-xs text-gray-600">
-          <span>{profile.age || calculateAge(profile.date_of_birth)} yrs</span>
-          {profile.height && (
-            <>
-              <span className="text-gray-300">•</span>
-              <span>{profile.height}cm</span>
-            </>
-          )}
-          {profile.city && (
-            <>
-              <span className="text-gray-300">•</span>
-              <span className="truncate max-w-[60px] sm:max-w-[80px]">{profile.city}</span>
-            </>
-          )}
-        </div>
-
-        <div className="text-[10px] sm:text-xs text-gray-600 space-y-0.5">
+      {/* Details Section */}
+      <div className="p-3 sm:p-4">
+        {/* Quick Info */}
+        <div className="space-y-1.5 mb-3">
           {profile.education && (
-            <p className="truncate">{profile.education}</p>
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600">
+              <GraduationCap size={12} className="text-primary flex-shrink-0" />
+              <span className="truncate">{profile.education}</span>
+            </div>
           )}
           {profile.occupation && (
-            <p className="truncate">{profile.occupation}</p>
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600">
+              <Briefcase size={12} className="text-primary flex-shrink-0" />
+              <span className="truncate">{profile.occupation}</span>
+            </div>
           )}
-          {profile.religion && (
-            <p>{profile.religion}{profile.caste ? ` • ${profile.caste}` : ''}</p>
+          {(profile.religion || profile.caste) && (
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-gray-600">
+              <Star size={12} className="text-primary flex-shrink-0" />
+              <span className="truncate">
+                {profile.religion}{profile.caste ? ` • ${profile.caste}` : ''}
+              </span>
+            </div>
           )}
         </div>
 
-        <div className="flex gap-1.5 sm:gap-2 pt-1.5 sm:pt-2">
+        {/* Action Buttons */}
+        <div className="flex gap-2">
           <button
-            onClick={handleViewProfile}
-            className="flex-1 btn-secondary text-[10px] sm:text-xs py-1.5 sm:py-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewProfile();
+            }}
+            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] sm:text-xs font-semibold py-2 sm:py-2.5 px-2 sm:px-3 rounded-xl transition-all"
           >
-            View
+            View Profile
           </button>
           {onInterestSent && (
             <button
               onClick={handleSendInterest}
               disabled={sendingInterest || interestSent}
-              className={`flex-1 text-[10px] sm:text-xs py-1.5 sm:py-2 flex items-center justify-center gap-1 cursor-pointer ${
+              className={`flex-1 text-[10px] sm:text-xs font-semibold py-2 sm:py-2.5 px-2 sm:px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
                 interestSent
-                  ? 'bg-green-100 text-green-700 rounded-lg'
-                  : 'btn-primary disabled:opacity-50'
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                  : 'bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-md hover:-translate-y-0.5'
               }`}
             >
               {sendingInterest ? (
-                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : interestSent ? (
                 <>
-                  <Check size={12} />
-                  <span>Sent</span>
+                  <Check size={14} />
+                  <span className="hidden sm:inline">Sent</span>
                 </>
               ) : (
                 <>
-                  <Heart size={12} />
-                  <span>Interest</span>
+                  <Heart size={14} fill="currentColor" />
+                  <span className="hidden sm:inline">Interest</span>
                 </>
               )}
             </button>

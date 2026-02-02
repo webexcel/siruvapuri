@@ -30,9 +30,16 @@ adminApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Skip redirect for login endpoint - let the login page handle the error
+      const isLoginRequest = error.config?.url?.includes('/admin/login');
+      if (isLoginRequest) {
+        return Promise.reject(error);
+      }
+
       // Token expired or invalid - redirect to admin login
-      const isAdmin = localStorage.getItem('isAdmin') === 'true';
-      if (isAdmin) {
+      // Only redirect if we're not already on the login page
+      const isOnLoginPage = window.location.pathname === '/login';
+      if (!isOnLoginPage) {
         localStorage.removeItem('token');
         localStorage.removeItem('isAdmin');
         window.location.href = '/login';
@@ -53,6 +60,7 @@ export const adminUserAPI = {
   getApprovedUsers: () => adminApi.get('/admin/users/approved'),
   getUsersWithPasswords: () => adminApi.get('/admin/users/with-passwords'),
   createUser: (data) => adminApi.post('/admin/users/create', data),
+  bulkCreateUsers: (users) => adminApi.post('/admin/users/bulk-create', { users }),
   updatePaymentStatus: (userId, data) => adminApi.patch(`/admin/users/${userId}/payment`, data),
   updateApprovalStatus: (userId, data) => adminApi.patch(`/admin/users/${userId}/approval`, data),
   updateUserData: (userId, data) => adminApi.patch(`/admin/users/${userId}/update`, data),
@@ -88,6 +96,14 @@ export const adminMembershipAPI = {
   updatePlan: (planId, data) => adminApi.put(`/admin/membership-plans/${planId}`, data),
   togglePlan: (planId) => adminApi.patch(`/admin/membership-plans/${planId}/toggle`),
   deletePlan: (planId) => adminApi.delete(`/admin/membership-plans/${planId}`),
+};
+
+export const adminSettingsAPI = {
+  getTheme: () => adminApi.get('/admin/settings/theme'),
+  updateTheme: (theme) => adminApi.put('/admin/settings/theme', { theme }),
+  getAllSettings: () => adminApi.get('/admin/settings'),
+  updateSetting: (key, value) => adminApi.put(`/admin/settings/${key}`, { value }),
+  getColumnSettings: () => adminApi.get('/admin/settings/columns'),
 };
 
 export default adminApi;

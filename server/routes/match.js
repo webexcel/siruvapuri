@@ -3,7 +3,10 @@ const router = express.Router();
 const matchController = require('../controllers/matchController');
 const auth = require('../middleware/auth');
 
-// All routes require authentication
+// Public route - no authentication required
+router.get('/public-search', matchController.publicSearchProfiles);
+
+// Protected routes - require authentication
 router.use(auth);
 
 router.get('/recommendations', matchController.getDailyRecommendations);

@@ -20,6 +20,7 @@ const AdminMembership = () => {
     name: '',
     price: '',
     duration_months: '',
+    profile_views_limit: '',
     features: '',
     color: 'from-gray-400 to-gray-600'
   });
@@ -92,19 +93,20 @@ const AdminMembership = () => {
   };
 
   const handleDeletePlan = async (planId, planName) => {
-    const result = await showConfirm(
+    const confirmed = await showConfirm(
       `Delete the "${planName}" plan? This action cannot be undone.`,
       'Confirm Delete'
     );
 
-    if (result.isConfirmed) {
+    if (confirmed && confirmed.isConfirmed) {
       setActionLoading(prev => ({ ...prev, [`delete-${planId}`]: true }));
       try {
         await adminMembershipAPI.deletePlan(planId);
         await fetchData();
         showSuccess('Plan deleted successfully!');
       } catch (error) {
-        showError('Failed to delete plan');
+        console.error('Delete plan error:', error);
+        showError(error.response?.data?.error || 'Failed to delete plan');
       } finally {
         setActionLoading(prev => ({ ...prev, [`delete-${planId}`]: false }));
       }
@@ -118,6 +120,7 @@ const AdminMembership = () => {
         name: plan.name,
         price: plan.price,
         duration_months: plan.duration_months,
+        profile_views_limit: plan.profile_views_limit === null ? '' : plan.profile_views_limit,
         features: plan.features ? plan.features.join('\n') : '',
         color: plan.color || 'from-gray-400 to-gray-600'
       });
@@ -127,6 +130,7 @@ const AdminMembership = () => {
         name: '',
         price: '',
         duration_months: '',
+        profile_views_limit: '',
         features: '',
         color: 'from-gray-400 to-gray-600'
       });
@@ -141,6 +145,7 @@ const AdminMembership = () => {
       name: '',
       price: '',
       duration_months: '',
+      profile_views_limit: '',
       features: '',
       color: 'from-gray-400 to-gray-600'
     });
@@ -159,6 +164,7 @@ const AdminMembership = () => {
       name: formData.name,
       price: parseFloat(formData.price),
       duration_months: parseInt(formData.duration_months),
+      profile_views_limit: formData.profile_views_limit === '' ? null : parseInt(formData.profile_views_limit),
       features: featuresArray,
       color: formData.color
     };
@@ -234,9 +240,9 @@ const AdminMembership = () => {
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                 <p className="text-3xl font-bold text-purple-600 mt-2">₹{stats.totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
+              {/* <div className="p-3 bg-purple-100 rounded-full">
                 <DollarSign className="text-purple-600" size={24} />
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -405,6 +411,19 @@ const AdminMembership = () => {
                     placeholder="3"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Profile Views Limit</label>
+                <input
+                  type="number"
+                  value={formData.profile_views_limit}
+                  onChange={(e) => setFormData({ ...formData, profile_views_limit: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  min="0"
+                  placeholder="Leave empty for unlimited"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty for unlimited profile views</p>
               </div>
 
               <div>

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ModuleProvider } from './context/ModuleContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -29,18 +31,21 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import CookiePolicy from './pages/CookiePolicy';
 import Disclaimer from './pages/Disclaimer';
+import FreeSearch from './pages/FreeSearch';
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <ScrollToTop />
-        <div className="flex flex-col min-h-screen">
-          <Toaster />
-          <Header />
-          <main className="flex-grow">
-            <PageTransition>
-              <Routes>
+      <ThemeProvider>
+        <ModuleProvider>
+          <AuthProvider>
+          <ScrollToTop />
+          <div className="flex flex-col min-h-screen">
+            <Toaster />
+            <Header />
+            <main className="flex-grow">
+              <PageTransition>
+                <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -56,6 +61,7 @@ function App() {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/cookies" element={<CookiePolicy />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/free-search" element={<FreeSearch />} />
 
               <Route
                 path="/dashboard"
@@ -111,13 +117,15 @@ function App() {
                 }
               />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </PageTransition>
-          </main>
-          <Footer />
-        </div>
-      </AuthProvider>
+                <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </PageTransition>
+            </main>
+            <Footer />
+          </div>
+          </AuthProvider>
+        </ModuleProvider>
+      </ThemeProvider>
     </Router>
   );
 }
