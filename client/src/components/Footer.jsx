@@ -11,7 +11,7 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 group">
               <div className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 bg-white rounded-lg p-1 sm:p-1.5 flex items-center justify-center">
                 <img
-                  src="/images/logo.png"
+                  src="/images/logo.jpeg"
                   alt="Siruvapuri Murugan Matrimony"
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />

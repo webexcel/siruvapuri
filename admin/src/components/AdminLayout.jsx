@@ -137,7 +137,7 @@ const AdminLayout = ({ children }) => {
             </button>
             <div className="flex items-center gap-3">
               <img
-                src="/images/logo.png"
+                src="/images/logo.jpeg"
                 alt="Siruvapuri Murugan Matrimony"
                 className="h-10 w-auto object-contain"
               />

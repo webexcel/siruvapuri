@@ -92,7 +92,7 @@ const Header = () => {
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
             <div className="relative">
               <img
-                src="/images/logo.png"
+                src="/images/logo.jpeg"
                 alt="Siruvapuri Murugan Matrimony"
                 className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
