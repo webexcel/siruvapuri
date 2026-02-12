@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const pool = require('../config/database');
+const db = require('../config/database');
 
 // Sample data arrays
 const firstNamesMale = [
@@ -102,7 +102,69 @@ function generateUser(index, gender) {
   };
 }
 
-function generateProfile(gender, age) {
+// Random profile photo URLs for testing (gender-appropriate portraits from picsum/ui-avatars)
+function getRandomProfilePhoto(gender, index) {
+  const malePhotos = [
+    'https://randomuser.me/api/portraits/men/1.jpg',
+    'https://randomuser.me/api/portraits/men/2.jpg',
+    'https://randomuser.me/api/portraits/men/3.jpg',
+    'https://randomuser.me/api/portraits/men/4.jpg',
+    'https://randomuser.me/api/portraits/men/5.jpg',
+    'https://randomuser.me/api/portraits/men/6.jpg',
+    'https://randomuser.me/api/portraits/men/7.jpg',
+    'https://randomuser.me/api/portraits/men/8.jpg',
+    'https://randomuser.me/api/portraits/men/9.jpg',
+    'https://randomuser.me/api/portraits/men/10.jpg',
+    'https://randomuser.me/api/portraits/men/11.jpg',
+    'https://randomuser.me/api/portraits/men/12.jpg',
+    'https://randomuser.me/api/portraits/men/13.jpg',
+    'https://randomuser.me/api/portraits/men/14.jpg',
+    'https://randomuser.me/api/portraits/men/15.jpg',
+    'https://randomuser.me/api/portraits/men/16.jpg',
+    'https://randomuser.me/api/portraits/men/17.jpg',
+    'https://randomuser.me/api/portraits/men/18.jpg',
+    'https://randomuser.me/api/portraits/men/19.jpg',
+    'https://randomuser.me/api/portraits/men/20.jpg',
+    'https://randomuser.me/api/portraits/men/21.jpg',
+    'https://randomuser.me/api/portraits/men/22.jpg',
+    'https://randomuser.me/api/portraits/men/23.jpg',
+    'https://randomuser.me/api/portraits/men/24.jpg',
+    'https://randomuser.me/api/portraits/men/25.jpg',
+  ];
+
+  const femalePhotos = [
+    'https://randomuser.me/api/portraits/women/1.jpg',
+    'https://randomuser.me/api/portraits/women/2.jpg',
+    'https://randomuser.me/api/portraits/women/3.jpg',
+    'https://randomuser.me/api/portraits/women/4.jpg',
+    'https://randomuser.me/api/portraits/women/5.jpg',
+    'https://randomuser.me/api/portraits/women/6.jpg',
+    'https://randomuser.me/api/portraits/women/7.jpg',
+    'https://randomuser.me/api/portraits/women/8.jpg',
+    'https://randomuser.me/api/portraits/women/9.jpg',
+    'https://randomuser.me/api/portraits/women/10.jpg',
+    'https://randomuser.me/api/portraits/women/11.jpg',
+    'https://randomuser.me/api/portraits/women/12.jpg',
+    'https://randomuser.me/api/portraits/women/13.jpg',
+    'https://randomuser.me/api/portraits/women/14.jpg',
+    'https://randomuser.me/api/portraits/women/15.jpg',
+    'https://randomuser.me/api/portraits/women/16.jpg',
+    'https://randomuser.me/api/portraits/women/17.jpg',
+    'https://randomuser.me/api/portraits/women/18.jpg',
+    'https://randomuser.me/api/portraits/women/19.jpg',
+    'https://randomuser.me/api/portraits/women/20.jpg',
+    'https://randomuser.me/api/portraits/women/21.jpg',
+    'https://randomuser.me/api/portraits/women/22.jpg',
+    'https://randomuser.me/api/portraits/women/23.jpg',
+    'https://randomuser.me/api/portraits/women/24.jpg',
+    'https://randomuser.me/api/portraits/women/25.jpg',
+  ];
+
+  const photos = gender === 'male' ? malePhotos : femalePhotos;
+  return photos[index % photos.length];
+}
+
+function generateProfile(gender, age, index) {
   const heightMale = getRandomNumber(165, 185);
   const heightFemale = getRandomNumber(152, 172);
   const city = getRandomElement(cities);
@@ -122,6 +184,7 @@ function generateProfile(gender, age) {
     state,
     country: 'India',
     about_me: `I am a ${age} year old professional from ${city}. Looking for a life partner who shares similar values and aspirations.`,
+    profile_picture: getRandomProfilePhoto(gender, index),
     looking_for: gender === 'male'
       ? 'Looking for an educated, family-oriented woman with good values'
       : 'Looking for an educated, well-settled man with good family values',
@@ -148,10 +211,10 @@ function generatePreferences(gender, age) {
 }
 
 async function seedUsers() {
-  const client = await pool.connect();
+  const client = await db.connect();
 
   try {
-    await client.query('BEGIN');
+    await client.query('START TRANSACTION');
 
     console.log('Starting to seed 50 test users...');
 
@@ -163,25 +226,24 @@ async function seedUsers() {
       // Insert user
       const userResult = await client.query(
         `INSERT INTO users (email, password, first_name, middle_name, last_name, phone, age, gender, is_approved, payment_status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         RETURNING id`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [user.email, user.password, user.first_name, user.middle_name, user.last_name,
          user.phone, user.age, user.gender, user.is_approved, user.payment_status]
       );
 
-      const userId = userResult.rows[0].id;
+      const userId = userResult.rows.insertId;
 
       // Insert profile
-      const profile = generateProfile(gender, user.age);
+      const profile = generateProfile(gender, user.age, i);
       await client.query(
         `INSERT INTO profiles (user_id, height, weight, marital_status, religion, caste,
          mother_tongue, education, occupation, annual_income, city, state, country,
-         about_me, looking_for, hobbies, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+         about_me, profile_picture, looking_for, hobbies, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [userId, profile.height, profile.weight, profile.marital_status, profile.religion,
          profile.caste, profile.mother_tongue, profile.education, profile.occupation,
          profile.annual_income, profile.city, profile.state, profile.country,
-         profile.about_me, profile.looking_for, profile.hobbies, profile.created_by]
+         profile.about_me, profile.profile_picture, profile.looking_for, profile.hobbies, profile.created_by]
       );
 
       // Insert preferences
@@ -189,7 +251,7 @@ async function seedUsers() {
       await client.query(
         `INSERT INTO preferences (user_id, age_min, age_max, height_min, height_max,
          marital_status, religion, education, occupation, location)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [userId, preferences.age_min, preferences.age_max, preferences.height_min,
          preferences.height_max, preferences.marital_status, preferences.religion,
          preferences.education, preferences.occupation, preferences.location]
@@ -208,7 +270,7 @@ async function seedUsers() {
     throw error;
   } finally {
     client.release();
-    pool.end();
+    process.exit(0);
   }
 }
 
@@ -216,7 +278,6 @@ async function seedUsers() {
 seedUsers()
   .then(() => {
     console.log('Seeding completed successfully!');
-    process.exit(0);
   })
   .catch((error) => {
     console.error('Seeding failed:', error);

@@ -12,11 +12,12 @@ const register = async (req, res) => {
   try {
     const { email, first_name, middle_name, last_name, phone, age, gender, interested_membership } = req.body;
 
-    // Check if email already exists
-    const existingUsers = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-
-    if (existingUsers.rows.length > 0) {
-      return res.status(400).json({ success: false, message: 'Email already registered' });
+    // Check if email already exists (only if email is provided)
+    if (email) {
+      const existingUsers = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existingUsers.rows.length > 0) {
+        return res.status(400).json({ success: false, message: 'Email already registered' });
+      }
     }
 
     // Check if phone number already exists
@@ -30,7 +31,7 @@ const register = async (req, res) => {
     const result = await db.query(
       `INSERT INTO users (email, first_name, middle_name, last_name, phone, age, gender, interested_membership, payment_status, is_approved)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', false)`,
-      [email, first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
+      [email || null, first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
     );
 
     const userId = result.rows.insertId;
@@ -39,14 +40,16 @@ const register = async (req, res) => {
     await db.query('INSERT INTO profiles (user_id) VALUES (?)', [userId]);
     await db.query('INSERT INTO preferences (user_id) VALUES (?)', [userId]);
 
-    // Send welcome email
-    const fullName = `${first_name} ${last_name}`;
-    await emailService.sendWelcomeEmail(email, fullName);
+    // Send welcome email (only if email is provided)
+    if (email) {
+      const fullName = `${first_name} ${last_name}`;
+      await emailService.sendWelcomeEmail(email, fullName);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Registration successful! Admin will review and set your password.',
-      user: { id: userId, email, first_name, middle_name, last_name }
+      user: { id: userId, email: email || null, first_name, middle_name, last_name }
     });
   } catch (error) {
     console.error('Registration error:', error);

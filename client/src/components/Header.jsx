@@ -90,13 +90,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo Section - Bigger */}
           <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-            <div className="relative">
-              <img
-                src="/images/logo.jpeg"
-                alt="Siruvapuri Murugan Matrimony"
-                className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
+            <img
+              src="/images/logo.png"
+              alt="Siruvapuri Murugan Matrimony"
+              className="h-12 sm:h-14 md:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            />
             <div className="flex flex-col">
               <span className="text-sm sm:text-base md:text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Siruvapuri Murugan

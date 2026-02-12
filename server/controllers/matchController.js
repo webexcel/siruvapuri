@@ -90,13 +90,6 @@ const getDailyRecommendations = async (req, res) => {
       });
     }
 
-    // Only require paid status OR approved status (more lenient)
-    if (user.payment_status !== 'paid' && !user.is_approved) {
-      return res.status(403).json({
-        error: 'User not eligible for recommendations. Please complete payment or wait for approval.'
-      });
-    }
-
     /* ---------------------------------------
        3. Fetch preferences (optional)
     ---------------------------------------- */
@@ -126,6 +119,10 @@ const getDailyRecommendations = async (req, res) => {
           WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
           ELSE false
         END as is_membership_active,
+        CASE
+          WHEN EXISTS (SELECT 1 FROM interests WHERE sender_id = ? AND receiver_id = u.id) THEN true
+          ELSE false
+        END as interest_sent,
         p.height,
         p.weight,
         p.marital_status,
@@ -147,14 +144,10 @@ const getDailyRecommendations = async (req, res) => {
       WHERE u.gender = ?
         AND u.id <> ?
         AND (u.is_approved = true OR u.payment_status = 'paid')
-        AND u.id NOT IN (
-          SELECT matched_user_id FROM matches WHERE user_id = ?
-          UNION
-          SELECT receiver_id FROM interests WHERE sender_id = ?
-        )
+      ORDER BY u.created_at DESC
       LIMIT 50
       `,
-      [oppositeGender, userId, userId, userId]
+      [userId, oppositeGender, userId]
     );
 
     /* ---------------------------------------
@@ -198,17 +191,17 @@ const searchProfiles = async (req, res) => {
                WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true
                ELSE false
              END as is_membership_active,
+             CASE
+               WHEN EXISTS (SELECT 1 FROM interests WHERE sender_id = ? AND receiver_id = u.id) THEN true
+               ELSE false
+             END as interest_sent,
              p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
              p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
              p.about_me, p.profile_picture, p.looking_for, p.hobbies
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
       WHERE u.id != ?
-      AND u.is_approved = true
-      AND u.payment_status = 'paid'
-      AND u.id NOT IN (
-        SELECT receiver_id FROM interests WHERE sender_id = ?
-      )
+      AND (u.is_approved = true OR u.payment_status = 'paid')
     `;
 
     const params = [userId, userId];
@@ -491,6 +484,10 @@ const getTopMatches = async (req, res) => {
         u.id,
         CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
         u.gender, u.age,
+        CASE
+          WHEN EXISTS (SELECT 1 FROM interests WHERE sender_id = ? AND receiver_id = u.id) THEN true
+          ELSE false
+        END as interest_sent,
         p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
         p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
         p.about_me, p.profile_picture, p.looking_for, p.hobbies
@@ -500,7 +497,7 @@ const getTopMatches = async (req, res) => {
        WHERE m.user_id = ?
        ORDER BY m.match_score DESC, m.created_at DESC
        LIMIT 10`,
-      [userId]
+      [userId, userId]
     );
 
     res.json({ topMatches: result.rows });
@@ -529,8 +526,7 @@ const publicSearchProfiles = async (req, res) => {
              p.about_me, p.profile_picture
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
-      WHERE u.is_approved = true
-      AND u.payment_status = 'paid'
+      WHERE (u.is_approved = true OR u.payment_status = 'paid')
     `;
 
     const params = [];

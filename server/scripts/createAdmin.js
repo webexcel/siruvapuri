@@ -11,7 +11,7 @@ const createAdmin = async () => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Check if admin already exists
-    const existingAdmin = await db.query('SELECT id FROM admins WHERE email = $1', [email]);
+    const existingAdmin = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
 
     if (existingAdmin.rows.length > 0) {
       console.log('Admin user already exists!');
@@ -22,11 +22,11 @@ const createAdmin = async () => {
 
     // Insert admin
     const result = await db.query(
-      'INSERT INTO admins (email, password, full_name) VALUES ($1, $2, $3) RETURNING id',
+      'INSERT INTO admins (email, password, full_name) VALUES (?, ?, ?)',
       [email, hashedPassword, fullName]
     );
 
-    console.log('✅ Admin user created successfully!');
+    console.log('Admin user created successfully!');
     console.log('Email:', email);
     console.log('Password:', password);
     console.log('Please change the password after first login!');

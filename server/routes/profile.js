@@ -11,6 +11,8 @@ router.use(auth);
 
 router.put('/update', validateProfile, handleValidationErrors, profileController.updateProfile);
 router.post('/upload-photo', upload.single('photo'), profileController.uploadProfilePicture);
+router.get('/photo/:id', profileController.downloadProfilePicture);
+router.get('/photo-url/:id', profileController.getProfilePictureUrl);
 router.put('/preferences', profileController.updatePreferences);
 router.get('/preferences/get', profileController.getPreferences);
 router.get('/views/count', profileController.getProfileViewsCount);

@@ -626,7 +626,7 @@ const Register = () => {
                   {/* Email Field */}
                   <motion.div variants={itemVariants}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address *
+                      Email Address
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -639,7 +639,6 @@ const Register = () => {
                         onChange={handleChange}
                         className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                         placeholder="your.email@example.com"
-                        required
                       />
                     </div>
                   </motion.div>
