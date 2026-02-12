@@ -960,9 +960,11 @@ const uploadUserPhoto = async (req, res) => {
       return res.status(400).json({ error: 'No photo uploaded' });
     }
 
-    const photoUrl = req.file.location;
+    // Upload to S3 with local fallback — file is already saved to disk by multer
+    const { uploadFileWithFallback } = require('../config/s3');
+    const photoUrl = await uploadFileWithFallback(req.file.path, req.file.originalname, userId, req);
 
-    // Get old profile picture URL to delete from S3
+    // Get old profile picture URL to delete from S3/local
     const oldPicResult = await db.query(
       'SELECT profile_picture FROM profiles WHERE user_id = ?',
       [userId]
@@ -988,7 +990,7 @@ const uploadUserPhoto = async (req, res) => {
       );
     }
 
-    // Delete old picture from S3 if exists
+    // Delete old picture from S3/local if exists
     if (oldPicResult.rows.length > 0 && oldPicResult.rows[0].profile_picture) {
       const { deleteFromS3 } = require('../config/s3');
       await deleteFromS3(oldPicResult.rows[0].profile_picture);

@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
@@ -32,6 +33,12 @@ app.options("*", cors());
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+/* ============================================================
+   STATIC FILES (serve uploaded photos when using local storage)
+============================================================ */
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* ============================================================
    ROUTES
