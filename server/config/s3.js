@@ -101,15 +101,18 @@ const MIME_TYPES = {
 };
 
 /**
- * Try to upload a local file to S3. If S3 fails, return the local file URL as fallback.
- * This is the main upload function used by controllers after multer saves to disk.
+ * Try to upload a local file to S3. If S3 fails:
+ * - In production: throws error (no local storage on server)
+ * - In development: falls back to local file URL
  *
  * @param {string} localFilePath - Absolute path to the local file (from multer)
  * @param {string} originalFilename - Original filename (used for extension/MIME detection)
  * @param {string} userId - User ID for organizing files in S3
  * @param {object} req - Express request object (used to build full URL for local fallback)
- * @returns {Promise<string>} The URL to use (S3 URL if upload succeeds, full local URL if it fails)
+ * @returns {Promise<string>} The URL to use (S3 URL or local URL in dev)
  */
+const isProduction = process.env.NODE_ENV === 'production';
+
 const uploadFileWithFallback = async (localFilePath, originalFilename, userId, req) => {
   // Build the local URL path (relative path for serving via express.static)
   const normalizedPath = localFilePath.replace(/\\/g, '/');
@@ -121,8 +124,13 @@ const uploadFileWithFallback = async (localFilePath, originalFilename, userId, r
   const host = req.headers['x-forwarded-host'] || req.get('host');
   const localUrl = `${protocol}://${host}${relativePath}`;
 
-  // If S3 is not configured, just return local URL
+  // If S3 is not configured
   if (!USE_S3 || !s3Client) {
+    if (isProduction) {
+      // Clean up local file and throw — no local storage in production
+      try { fs.unlinkSync(localFilePath); } catch (e) { /* ignore */ }
+      throw new Error('S3 is not configured. Photo uploads require S3 in production.');
+    }
     console.log('S3 not configured, using local file:', localUrl);
     return localUrl;
   }
@@ -148,7 +156,7 @@ const uploadFileWithFallback = async (localFilePath, originalFilename, userId, r
     const s3Url = `https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
     console.log('File uploaded to S3:', s3Url);
 
-    // Delete local file after successful S3 upload
+    // Always delete local temp file after successful S3 upload
     try {
       fs.unlinkSync(localFilePath);
       console.log('Local temp file deleted after S3 upload');
@@ -158,7 +166,16 @@ const uploadFileWithFallback = async (localFilePath, originalFilename, userId, r
 
     return s3Url;
   } catch (s3Error) {
-    console.error('S3 upload failed, falling back to local storage:', s3Error.message);
+    console.error('S3 upload failed:', s3Error.message);
+
+    if (isProduction) {
+      // Clean up local file and throw — no local storage in production
+      try { fs.unlinkSync(localFilePath); } catch (e) { /* ignore */ }
+      throw new Error('Photo upload to S3 failed. Please check S3/IAM configuration.');
+    }
+
+    // Development only: fall back to local storage
+    console.log('Falling back to local storage (dev mode):', localUrl);
     return localUrl;
   }
 };
