@@ -52,7 +52,15 @@ router.post('/users/:userId/assign-membership', assignMembership); // Dynamicall
 router.post('/users/:userId/revoke-membership', revokeMembership); // Dynamically controlled by superadmin module settings
 router.get('/users/:userId/full', getFullUserProfile);
 router.put('/users/:userId/full', updateFullUserProfile);
-router.post('/users/:userId/upload-photo', upload.single('photo'), uploadUserPhoto);
+router.post('/users/:userId/upload-photo', (req, res, next) => {
+  upload.single('photo')(req, res, (err) => {
+    if (err) {
+      console.error('Admin photo upload middleware error:', err.message);
+      return res.status(500).json({ error: 'Photo upload failed. Please try again later.' });
+    }
+    next();
+  });
+}, uploadUserPhoto);
 router.delete('/users/:userId', deleteUser);
 
 // Match Management
