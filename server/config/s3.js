@@ -1,22 +1,49 @@
-const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand
+} = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET;
-const USE_S3 = BUCKET_NAME && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+const AWS_REGION = process.env.AWS_REGION || 'ap-south-1';
 
-// Configure S3 Client (only if credentials are available)
+// Check if explicit credentials are provided (for local development)
+const hasExplicitCredentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+
+// USE_S3 is enabled if bucket is configured AND either:
+// 1. Explicit credentials are provided (local dev), OR
+// 2. USE_EC2_IAM_ROLE is true (EC2 with IAM role)
+const USE_EC2_IAM_ROLE = process.env.USE_EC2_IAM_ROLE === 'true';
+const USE_S3 = BUCKET_NAME && (hasExplicitCredentials || USE_EC2_IAM_ROLE);
+
+// Configure S3 Client
 let s3Client = null;
 if (USE_S3) {
-  s3Client = new S3Client({
-    region: process.env.AWS_REGION || 'ap-south-1',
-    credentials: {
+  const s3Config = {
+    region: AWS_REGION
+  };
+
+  // Only provide explicit credentials if available (for local development)
+  // On EC2 with IAM role, the SDK will automatically use instance metadata
+  if (hasExplicitCredentials) {
+    s3Config.credentials = {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
-  });
+    };
+    console.log('S3 configured with explicit credentials (local development mode)');
+  } else if (USE_EC2_IAM_ROLE) {
+    // No credentials needed - SDK will use EC2 instance metadata service (IMDS)
+    console.log('S3 configured to use EC2 IAM role (production mode)');
+  }
+
+  s3Client = new S3Client(s3Config);
 }
 
 // File filter for images only
@@ -119,16 +146,133 @@ const deleteFromS3 = async (fileUrl) => {
 // Get S3 URL for a file
 const getS3Url = (key) => {
   if (USE_S3) {
-    return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${key}`;
+    return `https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
   }
   return `/uploads/profiles/${key}`;
+};
+
+// MIME type lookup for common image types
+const MIME_TYPES = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp'
+};
+
+/**
+ * Upload a file buffer to S3 using PutObjectCommand.
+ * Works with EC2 IAM Role (no access keys needed in production).
+ *
+ * @param {Buffer} fileBuffer - The file content as a Buffer
+ * @param {string} originalFilename - Original filename (used for extension/MIME detection)
+ * @param {string} folder - S3 key prefix (e.g. 'profiles/123')
+ * @returns {Promise<{key: string, url: string}>} The S3 key and public URL
+ */
+const uploadToS3 = async (fileBuffer, originalFilename, folder = 'profiles') => {
+  if (!USE_S3 || !s3Client) {
+    throw new Error('S3 is not configured. Set AWS_S3_BUCKET and either provide credentials or enable USE_EC2_IAM_ROLE.');
+  }
+
+  const ext = path.extname(originalFilename).toLowerCase();
+  const contentType = MIME_TYPES[ext];
+  if (!contentType) {
+    throw new Error(`Unsupported file type: ${ext}. Allowed: ${Object.keys(MIME_TYPES).join(', ')}`);
+  }
+
+  // Generate a unique key to prevent collisions
+  const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const key = `${folder}/${uniqueSuffix}${ext}`;
+
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: contentType,
+    CacheControl: 'max-age=31536000, immutable'
+  });
+
+  await s3Client.send(command);
+
+  return {
+    key,
+    url: getS3Url(key)
+  };
+};
+
+/**
+ * Download (get) a file from S3 using GetObjectCommand.
+ * Returns the readable stream and metadata.
+ *
+ * @param {string} key - The S3 object key (e.g. 'profiles/123/1700000000.jpg')
+ * @returns {Promise<{stream: ReadableStream, contentType: string, contentLength: number}>}
+ */
+const downloadFromS3 = async (key) => {
+  if (!USE_S3 || !s3Client) {
+    throw new Error('S3 is not configured. Set AWS_S3_BUCKET and either provide credentials or enable USE_EC2_IAM_ROLE.');
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key
+  });
+
+  const response = await s3Client.send(command);
+
+  return {
+    stream: response.Body,
+    contentType: response.ContentType,
+    contentLength: response.ContentLength
+  };
+};
+
+/**
+ * Generate a pre-signed URL for temporary access to a private S3 object.
+ * Useful for serving images from a private bucket without making them public.
+ *
+ * @param {string} key - The S3 object key
+ * @param {number} expiresIn - URL validity in seconds (default: 1 hour)
+ * @returns {Promise<string>} Pre-signed URL
+ */
+const getPresignedUrl = async (key, expiresIn = 3600) => {
+  if (!USE_S3 || !s3Client) {
+    throw new Error('S3 is not configured.');
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key
+  });
+
+  return getSignedUrl(s3Client, command, { expiresIn });
+};
+
+/**
+ * Extract the S3 key from a full S3 URL.
+ *
+ * @param {string} url - Full S3 URL (e.g. https://bucket.s3.region.amazonaws.com/profiles/123/img.jpg)
+ * @returns {string|null} The key portion, or null if not a valid S3 URL
+ */
+const extractKeyFromUrl = (url) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.substring(1); // Remove leading slash
+  } catch {
+    return null;
+  }
 };
 
 module.exports = {
   upload,
   deleteFromS3,
   getS3Url,
+  uploadToS3,
+  downloadFromS3,
+  getPresignedUrl,
+  extractKeyFromUrl,
   s3Client,
   BUCKET_NAME,
-  USE_S3
+  USE_S3,
+  AWS_REGION
 };

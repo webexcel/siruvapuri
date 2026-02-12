@@ -31,6 +31,14 @@ const seedData = async () => {
 
       // Create profile based on gender
       const isMale = user.gender === 'male';
+      // Use gender-appropriate random portrait photos for testing
+      const malePhotoIndex = [1, 3, 5, 7, 9, 11, 13, 15];
+      const femalePhotoIndex = [1, 3, 5, 7, 9, 11, 13, 15];
+      const photoIdx = users.indexOf(user);
+      const profilePhoto = isMale
+        ? `https://randomuser.me/api/portraits/men/${malePhotoIndex[photoIdx % malePhotoIndex.length]}.jpg`
+        : `https://randomuser.me/api/portraits/women/${femalePhotoIndex[photoIdx % femalePhotoIndex.length]}.jpg`;
+
       const profile = {
         user_id: userId,
         height: isMale ? Math.floor(Math.random() * 20) + 165 : Math.floor(Math.random() * 15) + 155,
@@ -46,7 +54,7 @@ const seedData = async () => {
         state: 'Maharashtra',
         country: 'India',
         about_me: `I am a ${user.full_name.split(' ')[0]} and I'm looking for a life partner who shares similar values and interests.`,
-        profile_picture: `https://i.pravatar.cc/300?img=${userId}`,
+        profile_picture: profilePhoto,
         looking_for: 'Looking for someone who is honest, caring, and family-oriented.',
         hobbies: ['Reading', 'Traveling', 'Cooking', 'Music', 'Sports'][Math.floor(Math.random() * 5)],
         created_by: 'self'

@@ -347,10 +347,12 @@ const createUser = async (req, res) => {
       is_approved
     } = req.body;
 
-    // Check if email already exists
-    const existingUser = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already exists' });
+    // Check if email already exists (only if email is provided)
+    if (email) {
+      const existingUser = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ error: 'Email already exists' });
+      }
     }
 
     // Hash password
@@ -360,13 +362,13 @@ const createUser = async (req, res) => {
     const result = await db.query(
       `INSERT INTO users (email, password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [email, hashedPassword, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved]
+      [email || null, hashedPassword, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved]
     );
 
     res.json({
       success: true,
       message: 'User created successfully',
-      user: { id: result.rows.insertId, email, first_name, last_name }
+      user: { id: result.rows.insertId, email: email || null, first_name, last_name }
     });
   } catch (error) {
     console.error('Create user error:', error);

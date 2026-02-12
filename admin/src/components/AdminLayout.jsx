@@ -14,7 +14,8 @@ import {
   Mail,
   Lock,
   Settings,
-  Upload
+  Upload,
+  UserPlus
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -30,6 +31,7 @@ const iconMap = {
   'assign-match': UserCog,
   'interests': Mail,
   'membership': CreditCard,
+  'add-profile': UserPlus,
   'settings': Settings
 };
 
@@ -48,6 +50,7 @@ const AdminLayout = ({ children }) => {
     const items = [
       { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', key: 'dashboard' },
       { path: '/users', icon: Users, label: 'User List', key: 'users' },
+      { path: '/add-profile', icon: UserPlus, label: 'Add Profile', key: 'add-profile' },
       { path: '/users/bulk-upload', icon: Upload, label: 'Bulk Upload', key: 'bulk-upload' },
       { path: '/set-password', icon: Key, label: 'Set Password', key: 'set-password' },
       { path: '/manage-passwords', icon: Lock, label: 'Manage Passwords', key: 'manage-passwords' },
@@ -139,7 +142,7 @@ const AdminLayout = ({ children }) => {
               <img
                 src="/images/logo.png"
                 alt="Siruvapuri Murugan Matrimony"
-                className="h-10 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
               <div className="flex flex-col">
                 <h1 className="text-lg font-bold text-gray-800 leading-tight">Siruvapuri Murugan</h1>

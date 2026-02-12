@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUserList from './pages/AdminUserList';
 import AdminEditUser from './pages/AdminEditUser';
 import AdminCreateUser from './pages/AdminCreateUser';
+import AdminAddProfile from './pages/AdminAddProfile';
 import AdminBulkUpload from './pages/AdminBulkUpload';
 import AdminSetPassword from './pages/AdminSetPassword';
 import AdminManagePasswords from './pages/AdminManagePasswords';
@@ -59,6 +60,14 @@ function App() {
           element={
             <AdminProtectedRoute>
               <AdminEditUser />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-profile"
+          element={
+            <AdminProtectedRoute>
+              <AdminAddProfile />
             </AdminProtectedRoute>
           }
         />

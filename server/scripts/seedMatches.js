@@ -1,25 +1,25 @@
-const pool = require('../config/database');
+const db = require('../config/database');
 
 function getRandomNumber(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 async function seedMatches() {
-  const client = await pool.connect();
+  const client = await db.connect();
 
   try {
-    await client.query('BEGIN');
+    await client.query('START TRANSACTION');
 
     console.log('Creating sample matches...');
 
     // Get all male and female users
     const males = await client.query(
-      'SELECT id FROM users WHERE gender = $1 AND is_approved = true LIMIT 20',
+      'SELECT id FROM users WHERE gender = ? AND is_approved = true LIMIT 20',
       ['male']
     );
 
     const females = await client.query(
-      'SELECT id FROM users WHERE gender = $1 AND is_approved = true LIMIT 20',
+      'SELECT id FROM users WHERE gender = ? AND is_approved = true LIMIT 20',
       ['female']
     );
 
@@ -42,7 +42,7 @@ async function seedMatches() {
       try {
         await client.query(
           `INSERT INTO matches (user_id, matched_user_id, match_score, status)
-           VALUES ($1, $2, $3, $4)`,
+           VALUES (?, ?, ?, ?)`,
           [maleUser.id, femaleUser.id, matchScore, status]
         );
         matchCount++;
@@ -62,7 +62,7 @@ async function seedMatches() {
     throw error;
   } finally {
     client.release();
-    pool.end();
+    process.exit(0);
   }
 }
 
@@ -70,7 +70,6 @@ async function seedMatches() {
 seedMatches()
   .then(() => {
     console.log('Match seeding completed successfully!');
-    process.exit(0);
   })
   .catch((error) => {
     console.error('Match seeding failed:', error);

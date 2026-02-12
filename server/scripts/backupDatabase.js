@@ -14,16 +14,13 @@ if (!fs.existsSync(backupDir)) {
 
 // Database credentials from environment
 const dbHost = process.env.DB_HOST || 'localhost';
-const dbPort = process.env.DB_PORT || '5432';
-const dbUser = process.env.DB_USER || 'postgres';
+const dbPort = process.env.DB_PORT || '3306';
+const dbUser = process.env.DB_USER || 'root';
 const dbPassword = process.env.DB_PASSWORD;
 const dbName = process.env.DB_NAME || 'matrimonial_db';
 
-// Set PGPASSWORD environment variable for pg_dump
-process.env.PGPASSWORD = dbPassword;
-
-// Create backup using pg_dump
-const command = `pg_dump -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${backupFile}"`;
+// Create backup using mysqldump
+const command = `mysqldump -h ${dbHost} -P ${dbPort} -u ${dbUser} ${dbPassword ? `-p${dbPassword}` : ''} ${dbName} > "${backupFile}"`;
 
 console.log('Starting database backup...');
 console.log(`Backup file: ${backupFile}`);
@@ -34,7 +31,7 @@ exec(command, (error, stdout, stderr) => {
     process.exit(1);
   }
 
-  if (stderr) {
+  if (stderr && !stderr.includes('Warning')) {
     console.error('Backup warnings:', stderr);
   }
 

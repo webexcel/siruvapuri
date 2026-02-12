@@ -1,7 +1,7 @@
 const { body, validationResult } = require('express-validator');
 
 const validateRegistration = [
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('email').optional({ values: 'falsy' }).isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('first_name').trim().notEmpty().withMessage('First name is required'),
   body('middle_name').optional().trim(),
   body('last_name').trim().notEmpty().withMessage('Last name is required'),
@@ -26,9 +26,10 @@ const validateLogin = [
 ];
 
 const validateProfile = [
-  body('height').optional().isInt({ min: 100, max: 250 }).withMessage('Height must be between 100-250 cm'),
-  body('weight').optional().isInt({ min: 30, max: 200 }).withMessage('Weight must be between 30-200 kg'),
-  body('marital_status').optional().isIn(['never_married', 'divorced', 'widowed', 'separated']),
+  // All fields are optional — allow partial updates with no strict constraints
+  body('height').optional({ values: 'falsy' }).trim(),
+  body('weight').optional({ values: 'falsy' }).trim(),
+  body('marital_status').optional({ values: 'falsy' }),
   body('city').optional().trim(),
   body('education').optional().trim(),
   body('occupation').optional().trim()

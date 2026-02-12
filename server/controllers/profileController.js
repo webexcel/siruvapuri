@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { deleteFromS3 } = require('../config/s3');
+const { deleteFromS3, uploadToS3, downloadFromS3, getPresignedUrl, extractKeyFromUrl, USE_S3 } = require('../config/s3');
 
 // Update profile
 const updateProfile = async (req, res) => {
@@ -48,16 +48,24 @@ const updateProfile = async (req, res) => {
     const updateFields = [];
     const updateValues = [];
 
+    // Fields that must be NULL (not empty string) in MySQL
+    const dateFields = ['date_of_birth'];
+    const intFields = ['weight', 'brothers_count', 'brothers_married', 'sisters_count', 'sisters_married',
+      'expected_age_min', 'expected_age_max'];
+
     allowedFields.forEach(field => {
       if (profileData[field] !== undefined) {
         updateFields.push(`${field} = ?`);
-        // Convert empty strings to null for numeric fields
-        const numericFields = ['brothers_count', 'brothers_married', 'sisters_count', 'sisters_married',
-          'expected_age_min', 'expected_age_max'];
-        if (numericFields.includes(field) && profileData[field] === '') {
+        const value = profileData[field];
+
+        if ((dateFields.includes(field) || intFields.includes(field)) && (value === '' || value === null)) {
+          // MySQL rejects empty strings for DATE and INT columns — use NULL
           updateValues.push(null);
+        } else if (field === 'height') {
+          // Height can be in feet (e.g. "5.6") or cm — store as-is, null if empty
+          updateValues.push(value === '' || value === null ? null : String(value));
         } else {
-          updateValues.push(profileData[field]);
+          updateValues.push(value);
         }
       }
     });
@@ -262,11 +270,129 @@ const uploadProfilePicture = async (req, res) => {
   }
 };
 
+// Upload profile picture using PutObjectCommand (buffer-based upload)
+const uploadProfilePictureBuffer = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const imageResult = await uploadToS3(
+      req.file.buffer,
+      req.file.originalname,
+      `profiles/${userId}`
+    );
+
+    // Delete old photo from S3
+    const oldPicResult = await db.query(
+      'SELECT profile_picture FROM profiles WHERE user_id = ?',
+      [userId]
+    );
+
+    if (oldPicResult.rows.length > 0 && oldPicResult.rows[0].profile_picture) {
+      await deleteFromS3(oldPicResult.rows[0].profile_picture);
+    }
+
+    // Update profile with new picture URL
+    await db.query(
+      'UPDATE profiles SET profile_picture = ? WHERE user_id = ?',
+      [imageResult.url, userId]
+    );
+
+    res.json({
+      message: 'Profile picture uploaded successfully',
+      profile_picture: imageResult.url
+    });
+  } catch (error) {
+    console.error('Upload profile picture (buffer) error:', error);
+    if (error.name === 'NoSuchBucket') {
+      return res.status(500).json({ error: 'Storage bucket not found. Contact administrator.' });
+    }
+    res.status(500).json({ error: 'Failed to upload profile picture' });
+  }
+};
+
+// Download profile picture (stream from S3)
+const downloadProfilePicture = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      'SELECT profile_picture FROM profiles WHERE user_id = ?',
+      [id]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].profile_picture) {
+      return res.status(404).json({ error: 'Profile picture not found' });
+    }
+
+    const imageUrl = result.rows[0].profile_picture;
+    const key = extractKeyFromUrl(imageUrl);
+
+    if (!key) {
+      return res.status(404).json({ error: 'Invalid image reference' });
+    }
+
+    const { stream, contentType, contentLength } = await downloadFromS3(key);
+
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': contentLength,
+      'Cache-Control': 'public, max-age=86400'
+    });
+
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Download profile picture error:', error);
+    if (error.name === 'NoSuchKey') {
+      return res.status(404).json({ error: 'Image not found in storage' });
+    }
+    res.status(500).json({ error: 'Failed to download profile picture' });
+  }
+};
+
+// Get a pre-signed URL for a profile picture (private bucket access)
+const getProfilePictureUrl = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      'SELECT profile_picture FROM profiles WHERE user_id = ?',
+      [id]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].profile_picture) {
+      return res.status(404).json({ error: 'Profile picture not found' });
+    }
+
+    if (!USE_S3) {
+      return res.json({ url: result.rows[0].profile_picture });
+    }
+
+    const key = extractKeyFromUrl(result.rows[0].profile_picture);
+    if (!key) {
+      return res.status(404).json({ error: 'Invalid image reference' });
+    }
+
+    const signedUrl = await getPresignedUrl(key, 3600);
+
+    res.json({ url: signedUrl });
+  } catch (error) {
+    console.error('Get presigned URL error:', error);
+    res.status(500).json({ error: 'Failed to generate image URL' });
+  }
+};
+
 module.exports = {
   updateProfile,
   getProfileById,
   updatePreferences,
   getPreferences,
   getProfileViewsCount,
-  uploadProfilePicture
+  uploadProfilePicture,
+  uploadProfilePictureBuffer,
+  downloadProfilePicture,
+  getProfilePictureUrl
 };

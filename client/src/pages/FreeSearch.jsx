@@ -180,8 +180,8 @@ const FreeSearch = () => {
     loadProfiles();
   };
 
-  // Filter sidebar component
-  const FilterSidebar = ({ isMobile = false }) => (
+  // Render filter form content (inline to avoid remount on state change)
+  const renderFilterContent = (isMobile = false) => (
     <div className={`${isMobile ? '' : 'sticky top-24'}`}>
       <div className="card p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
@@ -470,7 +470,7 @@ const FreeSearch = () => {
 
           {/* Filter Sidebar - Right (Desktop) */}
           <div className="hidden lg:block w-72 xl:w-80 order-1 lg:order-2">
-            <FilterSidebar />
+            {renderFilterContent()}
           </div>
         </div>
 
@@ -483,7 +483,7 @@ const FreeSearch = () => {
             />
             <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-gray-50 overflow-y-auto">
               <div className="p-4">
-                <FilterSidebar isMobile={true} />
+                {renderFilterContent(true)}
               </div>
             </div>
           </div>

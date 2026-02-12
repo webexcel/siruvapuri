@@ -5,11 +5,12 @@ async function addPlainPasswordColumn() {
   try {
     console.log('Starting migration: Adding plain_password column...');
 
-    // Check if column already exists
+    // Check if column already exists (MySQL syntax)
     const checkColumn = await db.query(`
       SELECT column_name
       FROM information_schema.columns
-      WHERE table_name = 'users' AND column_name = 'plain_password';
+      WHERE table_schema = DATABASE()
+      AND table_name = 'users' AND column_name = 'plain_password';
     `);
 
     if (checkColumn.rows.length > 0) {

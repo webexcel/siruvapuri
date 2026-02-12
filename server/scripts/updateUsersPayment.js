@@ -1,17 +1,15 @@
-const pool = require('../config/database');
+const db = require('../config/database');
 
 async function updatePaymentStatus() {
   try {
-    const result = await pool.query(
+    const result = await db.query(
       "UPDATE users SET payment_status = 'paid' WHERE is_approved = true"
     );
 
-    console.log(`Updated ${result.rowCount} users to paid status`);
-    pool.end();
+    console.log(`Updated users to paid status`);
     process.exit(0);
   } catch (error) {
     console.error('Error updating payment status:', error);
-    pool.end();
     process.exit(1);
   }
 }

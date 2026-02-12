@@ -266,7 +266,7 @@ const AdminCreateUser = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="md:col-span-2">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email <span className="text-red-500">*</span>
+                    Email
                   </label>
                   <input
                     type="email"
@@ -276,7 +276,6 @@ const AdminCreateUser = () => {
                     onChange={handleChange}
                     className="input-field text-sm md:text-base"
                     placeholder="user@example.com"
-                    required
                   />
                 </div>
 
@@ -383,7 +382,7 @@ const AdminCreateUser = () => {
           <ul className="text-xs md:text-sm text-blue-700 space-y-1 list-disc list-inside">
             <li>Select an existing user from the dropdown to auto-fill their information</li>
             <li>All fields marked with <span className="text-red-500">*</span> are required</li>
-            <li>Email must be unique and valid</li>
+            <li>Email is optional, but must be unique and valid if provided</li>
             <li>Phone number must be exactly 10 digits</li>
             <li>Password must be at least 6 characters long</li>
             <li>Users marked as approved can login immediately (if paid and have password)</li>

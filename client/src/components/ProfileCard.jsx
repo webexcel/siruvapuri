@@ -53,7 +53,7 @@ const ProfileCard = ({ profile, showMatchScore = false, onInterestSent }) => {
   const { isModuleEnabled } = useModules();
   const isMembershipEnabled = isModuleEnabled('membership');
   const [sendingInterest, setSendingInterest] = useState(false);
-  const [interestSent, setInterestSent] = useState(false);
+  const [interestSent, setInterestSent] = useState(profile.interest_sent || false);
   const [isHovered, setIsHovered] = useState(false);
 
   const avatarBgColor = theme?.primary?.replace('#', '') || '8B1538';

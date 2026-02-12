@@ -181,6 +181,20 @@ const initializeDatabase = async () => {
       }
     }
 
+    // Migrate height column from INT to VARCHAR to support feet format (e.g. "5.6")
+    const [heightColCheck] = await pool.execute(`
+      SELECT DATA_TYPE FROM information_schema.columns
+      WHERE table_schema = DATABASE()
+      AND table_name = 'profiles'
+      AND column_name = 'height'
+    `);
+
+    if (heightColCheck.length > 0 && heightColCheck[0].DATA_TYPE === 'int') {
+      console.log('Migrating height column from INT to VARCHAR...');
+      await pool.execute(`ALTER TABLE profiles MODIFY COLUMN height VARCHAR(20)`);
+      console.log('height column migrated successfully');
+    }
+
     // Check if sidebar_settings exists in site_settings
     const [sidebarCheck] = await pool.execute(`
       SELECT COUNT(*) as count FROM site_settings
@@ -257,6 +271,19 @@ const initializeDatabase = async () => {
         [JSON.stringify(defaultColumnSettings)]
       );
       console.log('column_settings created successfully');
+    }
+    // Migrate email column to allow NULL (email is optional)
+    const [emailColCheck] = await pool.execute(`
+      SELECT IS_NULLABLE FROM information_schema.columns
+      WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'email'
+    `);
+
+    if (emailColCheck.length > 0 && emailColCheck[0].IS_NULLABLE === 'NO') {
+      console.log('Making email column nullable...');
+      await pool.execute(`ALTER TABLE users MODIFY COLUMN email VARCHAR(255) NULL DEFAULT NULL`);
+      console.log('email column is now nullable');
     }
   } catch (error) {
     console.error('Database initialization error:', error.message);
