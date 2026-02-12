@@ -10,15 +10,7 @@ const { upload } = require('../config/s3');
 router.use(auth);
 
 router.put('/update', validateProfile, handleValidationErrors, profileController.updateProfile);
-router.post('/upload-photo', (req, res, next) => {
-  upload.single('photo')(req, res, (err) => {
-    if (err) {
-      console.error('Photo upload middleware error:', err.message);
-      return res.status(500).json({ error: 'Photo upload failed. Please try again later.' });
-    }
-    next();
-  });
-}, profileController.uploadProfilePicture);
+router.post('/upload-photo', upload.single('photo'), profileController.uploadProfilePicture);
 router.get('/photo/:id', profileController.downloadProfilePicture);
 router.get('/photo-url/:id', profileController.getProfilePictureUrl);
 router.put('/preferences', profileController.updatePreferences);

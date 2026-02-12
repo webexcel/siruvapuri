@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { deleteFromS3, uploadToS3, downloadFromS3, getPresignedUrl, extractKeyFromUrl, USE_S3 } = require('../config/s3');
+const { deleteFromS3, uploadToS3, uploadFileWithFallback, downloadFromS3, getPresignedUrl, extractKeyFromUrl, USE_S3 } = require('../config/s3');
 
 // Update profile
 const updateProfile = async (req, res) => {
@@ -242,9 +242,10 @@ const uploadProfilePicture = async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const imageUrl = req.file.location;
+    // Upload to S3 with local fallback — file is already saved to disk by multer
+    const imageUrl = await uploadFileWithFallback(req.file.path, req.file.originalname, userId, req);
 
-    // Get old profile picture URL to delete from S3
+    // Get old profile picture URL to delete from S3/local
     const oldPicResult = await db.query(
       'SELECT profile_picture FROM profiles WHERE user_id = ?',
       [userId]

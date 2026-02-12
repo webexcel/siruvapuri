@@ -6,7 +6,6 @@ const {
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const multer = require('multer');
-const multerS3 = require('multer-s3');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -59,7 +58,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Local storage configuration (fallback when S3 is not configured)
+// Local storage configuration — ALWAYS use local disk first, then try S3 in controller
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'profiles');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -67,7 +66,9 @@ if (!fs.existsSync(uploadsDir)) {
 
 const localStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const userDir = path.join(uploadsDir, String(req.userId));
+    // For admin routes, use req.params.userId; for user routes, use req.userId
+    const userId = req.params.userId || req.userId || 'unknown';
+    const userDir = path.join(uploadsDir, String(userId));
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir, { recursive: true });
     }
@@ -80,45 +81,94 @@ const localStorage = multer.diskStorage({
   }
 });
 
-// Configure multer with S3 or local storage
-let upload;
-if (USE_S3) {
-  upload = multer({
-    storage: multerS3({
-      s3: s3Client,
-      bucket: BUCKET_NAME,
-      contentType: multerS3.AUTO_CONTENT_TYPE,
-      key: function (req, file, cb) {
-        const userId = req.userId;
-        const timestamp = Date.now();
-        const ext = path.extname(file.originalname);
-        const filename = `profiles/${userId}/${timestamp}${ext}`;
-        cb(null, filename);
-      }
-    }),
-    fileFilter: fileFilter,
-    limits: {
-      fileSize: 5 * 1024 * 1024 // 5MB limit
+// Always use local disk storage for multer — S3 upload happens in the controller
+const upload = multer({
+  storage: localStorage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+console.log(`Using local disk storage for multer uploads${USE_S3 ? ' (will attempt S3 upload after)' : ''}`);
+
+// MIME type lookup for common image types
+const MIME_TYPES = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp'
+};
+
+/**
+ * Try to upload a local file to S3. If S3 fails, return the local file URL as fallback.
+ * This is the main upload function used by controllers after multer saves to disk.
+ *
+ * @param {string} localFilePath - Absolute path to the local file (from multer)
+ * @param {string} originalFilename - Original filename (used for extension/MIME detection)
+ * @param {string} userId - User ID for organizing files in S3
+ * @param {object} req - Express request object (used to build full URL for local fallback)
+ * @returns {Promise<string>} The URL to use (S3 URL if upload succeeds, full local URL if it fails)
+ */
+const uploadFileWithFallback = async (localFilePath, originalFilename, userId, req) => {
+  // Build the local URL path (relative path for serving via express.static)
+  const normalizedPath = localFilePath.replace(/\\/g, '/');
+  const uploadsIndex = normalizedPath.indexOf('uploads/');
+  const relativePath = '/' + normalizedPath.substring(uploadsIndex);
+
+  // Build full local URL using request info so frontend can access it cross-origin
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+  const host = req.headers['x-forwarded-host'] || req.get('host');
+  const localUrl = `${protocol}://${host}${relativePath}`;
+
+  // If S3 is not configured, just return local URL
+  if (!USE_S3 || !s3Client) {
+    console.log('S3 not configured, using local file:', localUrl);
+    return localUrl;
+  }
+
+  // Try S3 upload
+  try {
+    const fileBuffer = fs.readFileSync(localFilePath);
+    const ext = path.extname(originalFilename).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+    const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const key = `profiles/${userId}/${uniqueSuffix}${ext}`;
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+      CacheControl: 'max-age=31536000, immutable'
+    });
+
+    await s3Client.send(command);
+    const s3Url = `https://${BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+    console.log('File uploaded to S3:', s3Url);
+
+    // Delete local file after successful S3 upload
+    try {
+      fs.unlinkSync(localFilePath);
+      console.log('Local temp file deleted after S3 upload');
+    } catch (unlinkErr) {
+      console.warn('Could not delete local temp file:', unlinkErr.message);
     }
-  });
-  console.log('Using S3 storage for file uploads');
-} else {
-  upload = multer({
-    storage: localStorage,
-    fileFilter: fileFilter,
-    limits: {
-      fileSize: 5 * 1024 * 1024 // 5MB limit
-    }
-  });
-  console.log('Using local storage for file uploads (S3 not configured)');
-}
+
+    return s3Url;
+  } catch (s3Error) {
+    console.error('S3 upload failed, falling back to local storage:', s3Error.message);
+    return localUrl;
+  }
+};
 
 // Delete file from S3 or local storage
 const deleteFromS3 = async (fileUrl) => {
   if (!fileUrl) return;
 
   try {
-    if (USE_S3 && fileUrl.includes(BUCKET_NAME)) {
+    if (USE_S3 && s3Client && fileUrl.includes(BUCKET_NAME)) {
       // Delete from S3
       const url = new URL(fileUrl);
       const key = url.pathname.substring(1); // Remove leading slash
@@ -151,23 +201,9 @@ const getS3Url = (key) => {
   return `/uploads/profiles/${key}`;
 };
 
-// MIME type lookup for common image types
-const MIME_TYPES = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp'
-};
-
 /**
  * Upload a file buffer to S3 using PutObjectCommand.
  * Works with EC2 IAM Role (no access keys needed in production).
- *
- * @param {Buffer} fileBuffer - The file content as a Buffer
- * @param {string} originalFilename - Original filename (used for extension/MIME detection)
- * @param {string} folder - S3 key prefix (e.g. 'profiles/123')
- * @returns {Promise<{key: string, url: string}>} The S3 key and public URL
  */
 const uploadToS3 = async (fileBuffer, originalFilename, folder = 'profiles') => {
   if (!USE_S3 || !s3Client) {
@@ -180,7 +216,6 @@ const uploadToS3 = async (fileBuffer, originalFilename, folder = 'profiles') => 
     throw new Error(`Unsupported file type: ${ext}. Allowed: ${Object.keys(MIME_TYPES).join(', ')}`);
   }
 
-  // Generate a unique key to prevent collisions
   const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
   const key = `${folder}/${uniqueSuffix}${ext}`;
 
@@ -202,14 +237,10 @@ const uploadToS3 = async (fileBuffer, originalFilename, folder = 'profiles') => 
 
 /**
  * Download (get) a file from S3 using GetObjectCommand.
- * Returns the readable stream and metadata.
- *
- * @param {string} key - The S3 object key (e.g. 'profiles/123/1700000000.jpg')
- * @returns {Promise<{stream: ReadableStream, contentType: string, contentLength: number}>}
  */
 const downloadFromS3 = async (key) => {
   if (!USE_S3 || !s3Client) {
-    throw new Error('S3 is not configured. Set AWS_S3_BUCKET and either provide credentials or enable USE_EC2_IAM_ROLE.');
+    throw new Error('S3 is not configured.');
   }
 
   const command = new GetObjectCommand({
@@ -228,11 +259,6 @@ const downloadFromS3 = async (key) => {
 
 /**
  * Generate a pre-signed URL for temporary access to a private S3 object.
- * Useful for serving images from a private bucket without making them public.
- *
- * @param {string} key - The S3 object key
- * @param {number} expiresIn - URL validity in seconds (default: 1 hour)
- * @returns {Promise<string>} Pre-signed URL
  */
 const getPresignedUrl = async (key, expiresIn = 3600) => {
   if (!USE_S3 || !s3Client) {
@@ -249,15 +275,12 @@ const getPresignedUrl = async (key, expiresIn = 3600) => {
 
 /**
  * Extract the S3 key from a full S3 URL.
- *
- * @param {string} url - Full S3 URL (e.g. https://bucket.s3.region.amazonaws.com/profiles/123/img.jpg)
- * @returns {string|null} The key portion, or null if not a valid S3 URL
  */
 const extractKeyFromUrl = (url) => {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    return parsed.pathname.substring(1); // Remove leading slash
+    return parsed.pathname.substring(1);
   } catch {
     return null;
   }
@@ -268,6 +291,7 @@ module.exports = {
   deleteFromS3,
   getS3Url,
   uploadToS3,
+  uploadFileWithFallback,
   downloadFromS3,
   getPresignedUrl,
   extractKeyFromUrl,
