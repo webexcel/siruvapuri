@@ -272,18 +272,15 @@ const initializeDatabase = async () => {
       );
       console.log('column_settings created successfully');
     }
-    // Migrate email column to allow NULL (email is optional)
+    // Drop email column from users (email removed from user model)
     const [emailColCheck] = await pool.execute(`
-      SELECT IS_NULLABLE FROM information_schema.columns
-      WHERE table_schema = DATABASE()
-      AND table_name = 'users'
-      AND column_name = 'email'
+      SELECT COLUMN_NAME FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'email'
     `);
-
-    if (emailColCheck.length > 0 && emailColCheck[0].IS_NULLABLE === 'NO') {
-      console.log('Making email column nullable...');
-      await pool.execute(`ALTER TABLE users MODIFY COLUMN email VARCHAR(255) NULL DEFAULT NULL`);
-      console.log('email column is now nullable');
+    if (emailColCheck.length > 0) {
+      console.log('Dropping email column from users table...');
+      await pool.execute('ALTER TABLE users DROP COLUMN email');
+      console.log('email column dropped');
     }
   } catch (error) {
     console.error('Database initialization error:', error.message);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { adminUserAPI } from '../utils/adminApi';
 import Swal from 'sweetalert2';
-import { Search, Eye, EyeOff, Copy, Key, CheckCircle, XCircle, Mail, Phone, Edit2, Save, X } from 'lucide-react';
+import { Search, Eye, EyeOff, Copy, Key, CheckCircle, XCircle, Phone, Edit2, Save, X } from 'lucide-react';
 import SkeletonLoader from '../components/SkeletonLoader';
 
 const AdminManagePasswords = () => {
@@ -41,7 +41,6 @@ const AdminManagePasswords = () => {
         (user) =>
           user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.phone?.includes(searchTerm)
       );
     }
@@ -83,7 +82,6 @@ const AdminManagePasswords = () => {
       first_name: user.first_name,
       middle_name: user.middle_name || '',
       last_name: user.last_name,
-      email: user.email,
       phone: user.phone,
       age: user.age,
       gender: user.gender,
@@ -103,7 +101,6 @@ const AdminManagePasswords = () => {
         first_name: editForm.first_name,
         middle_name: editForm.middle_name,
         last_name: editForm.last_name,
-        email: editForm.email,
         phone: editForm.phone,
         age: editForm.age,
         gender: editForm.gender
@@ -180,7 +177,7 @@ const AdminManagePasswords = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search by name or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
@@ -303,16 +300,6 @@ const AdminManagePasswords = () => {
                         {editingUser === user.id ? (
                           <div className="space-y-3 min-w-[220px]">
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-                              <input
-                                type="email"
-                                value={editForm.email}
-                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                placeholder="email@example.com"
-                              />
-                            </div>
-                            <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
                               <input
                                 type="text"
@@ -340,8 +327,6 @@ const AdminManagePasswords = () => {
                         ) : (
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm">
-                              <Mail size={14} className="text-gray-400" />
-                              <span className="text-gray-700">{user.email}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
                               <Phone size={14} className="text-gray-400" />

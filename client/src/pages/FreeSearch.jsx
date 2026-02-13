@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
-import { Search, Lock, Eye, UserPlus, Phone, Mail, MapPin, Filter, X } from 'lucide-react';
+import { Search, Lock, Eye, UserPlus, Phone, MapPin, Filter, X } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -60,10 +60,6 @@ const BlurredProfileCard = ({ profile }) => {
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Phone className="w-3 h-3" />
             <span className="blur-sm select-none">9876543210</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <Mail className="w-3 h-3" />
-            <span className="blur-sm select-none">email@hidden.com</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <MapPin className="w-3 h-3" />
@@ -387,7 +383,7 @@ const FreeSearch = () => {
           <div className="flex-1">
             <h3 className="font-semibold text-gray-800 text-sm sm:text-base">Preview Profiles for Free</h3>
             <p className="text-xs sm:text-sm text-gray-600">
-              Contact information (phone, email, address) is hidden for non-members.
+              Contact information (phone, address) is hidden for non-members.
               <Link to="/register" className="text-primary font-medium ml-1 hover:underline">
                 Register now
               </Link> to unlock full access!

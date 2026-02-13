@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import { showSuccess, showError } from '../utils/sweetalert';
-import { UserPlus, Save, X, Search } from 'lucide-react';
+import { UserPlus, Save, X } from 'lucide-react';
 
 const AdminCreateUser = () => {
-  const [users, setUsers] = useState([]);
-  const [selectedEmail, setSelectedEmail] = useState('');
   const [formData, setFormData] = useState({
-    email: '',
     first_name: '',
     middle_name: '',
     last_name: '',
@@ -20,62 +17,8 @@ const AdminCreateUser = () => {
     is_approved: false
   });
   const [loading, setLoading] = useState(false);
-  const [fetchingUser, setFetchingUser] = useState(false);
 
   const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    fetchAllUsers();
-  }, []);
-
-  const fetchAllUsers = async () => {
-    try {
-      const response = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(response.data.users);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    }
-  };
-
-  const handleEmailSelect = async (email) => {
-    if (!email) {
-      handleReset();
-      return;
-    }
-
-    setSelectedEmail(email);
-    setFetchingUser(true);
-
-    try {
-      const response = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const user = response.data.users.find(u => u.email === email);
-
-      if (user) {
-        setFormData({
-          email: user.email,
-          first_name: user.first_name || '',
-          middle_name: user.middle_name || '',
-          last_name: user.last_name || '',
-          phone: user.phone || '',
-          age: user.age || '',
-          gender: user.gender || 'male',
-          password: '',
-          payment_status: user.payment_status || 'unpaid',
-          is_approved: user.is_approved || false
-        });
-        showSuccess('User data loaded successfully!');
-      }
-    } catch (error) {
-      showError('Failed to fetch user data');
-    } finally {
-      setFetchingUser(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -102,7 +45,6 @@ const AdminCreateUser = () => {
 
       // Reset form
       handleReset();
-      fetchAllUsers(); // Refresh user list
     } catch (error) {
       showError(error.response?.data?.error || 'Failed to create user');
     } finally {
@@ -111,9 +53,7 @@ const AdminCreateUser = () => {
   };
 
   const handleReset = () => {
-    setSelectedEmail('');
     setFormData({
-      email: '',
       first_name: '',
       middle_name: '',
       last_name: '',
@@ -135,39 +75,8 @@ const AdminCreateUser = () => {
             <UserPlus className="text-primary" size={32} />
             Create New User
           </h1>
-          <p className="text-sm md:text-base text-gray-600 mt-2">Add a new user or update existing user</p>
+          <p className="text-sm md:text-base text-gray-600 mt-2">Add a new user</p>
         </div>
-
-        {/* Email Selection */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 md:p-6">
-          <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-            <Search size={20} />
-            Select Existing User (Optional)
-          </h3>
-          <div className="space-y-2">
-            <label htmlFor="emailSelect" className="block text-sm font-medium text-blue-700">
-              Choose user by email to auto-fill their information
-            </label>
-            <select
-              id="emailSelect"
-              value={selectedEmail}
-              onChange={(e) => handleEmailSelect(e.target.value)}
-              className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm md:text-base"
-              disabled={fetchingUser}
-            >
-              <option value="">-- Create New User --</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.email}>
-                  {user.email} - {user.first_name} {user.last_name}
-                </option>
-              ))}
-            </select>
-            {fetchingUser && (
-              <p className="text-sm text-blue-600">Loading user data...</p>
-            )}
-          </div>
-        </div>
-
         {/* Form */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -259,26 +168,10 @@ const AdminCreateUser = () => {
                 </div>
               </div>
             </div>
-
             {/* Contact Information */}
             <div>
               <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">Contact Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div className="md:col-span-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="input-field text-sm md:text-base"
-                    placeholder="user@example.com"
-                  />
-                </div>
-
                 <div className="md:col-span-2">
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                     Phone <span className="text-red-500">*</span>
@@ -380,9 +273,7 @@ const AdminCreateUser = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 md:p-6">
           <h3 className="font-semibold text-blue-800 mb-2 text-sm md:text-base">Important Notes:</h3>
           <ul className="text-xs md:text-sm text-blue-700 space-y-1 list-disc list-inside">
-            <li>Select an existing user from the dropdown to auto-fill their information</li>
             <li>All fields marked with <span className="text-red-500">*</span> are required</li>
-            <li>Email is optional, but must be unique and valid if provided</li>
             <li>Phone number must be exactly 10 digits</li>
             <li>Password must be at least 6 characters long</li>
             <li>Users marked as approved can login immediately (if paid and have password)</li>

@@ -40,9 +40,7 @@ const AdminMatches = () => {
       filtered = filtered.filter(
         (match) =>
           match.user1_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          match.user2_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          match.user1_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          match.user2_email?.toLowerCase().includes(searchTerm.toLowerCase())
+          match.user2_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -183,7 +181,7 @@ const AdminMatches = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -263,7 +261,6 @@ const AdminMatches = () => {
                           )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">{match.user1_name}</div>
-                            <div className="text-sm text-gray-500">{match.user1_email}</div>
                           </div>
                         </div>
                       </td>
@@ -286,7 +283,6 @@ const AdminMatches = () => {
                           )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">{match.user2_name}</div>
-                            <div className="text-sm text-gray-500">{match.user2_email}</div>
                           </div>
                         </div>
                       </td>

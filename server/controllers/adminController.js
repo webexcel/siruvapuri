@@ -51,7 +51,7 @@ const getAllUsers = async (req, res) => {
   try {
     const users = await db.query(`
       SELECT
-        u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
+        u.id, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         u.payment_status, u.membership_type, u.membership_expiry, u.interested_membership,
         u.is_approved, u.password IS NOT NULL as has_password, u.created_at,
         p.profile_picture,
@@ -82,7 +82,7 @@ const updatePaymentStatus = async (req, res) => {
 
     // Get user details before update
     const userResult = await db.query(
-      'SELECT email, first_name, last_name FROM users WHERE id = ?',
+      'SELECT first_name, last_name, phone FROM users WHERE id = ?',
       [userId]
     );
 
@@ -93,13 +93,9 @@ const updatePaymentStatus = async (req, res) => {
       [payment_status, userId]
     );
 
-    // Send email if payment confirmed
-    if (payment_status === 'paid') {
-      const fullName = `${user.first_name} ${user.last_name}`;
-      await emailService.sendPaymentConfirmedEmail(user.email, fullName);
-    }
+    // Email notification skipped - users no longer have email
 
-    res.json({
+        res.json({
       success: true,
       message: `Payment status updated to ${payment_status}`
     });
@@ -117,7 +113,7 @@ const setUserPassword = async (req, res) => {
 
     // Check if user is paid and get user details
     const userCheck = await db.query(
-      'SELECT email, first_name, last_name, payment_status FROM users WHERE id = ?',
+      'SELECT first_name, last_name, phone, payment_status FROM users WHERE id = ?',
       [userId]
     );
 
@@ -140,11 +136,9 @@ const setUserPassword = async (req, res) => {
       [hashedPassword, password, userId]
     );
 
-    // Send email with credentials
-    const fullName = `${user.first_name} ${user.last_name}`;
-    await emailService.sendPasswordSetEmail(user.email, fullName, password);
+    // Email notification skipped - users no longer have email
 
-    res.json({
+        res.json({
       success: true,
       message: 'Password set successfully and user approved'
     });
@@ -158,7 +152,7 @@ const setUserPassword = async (req, res) => {
 const getPaidUsersWithoutPassword = async (req, res) => {
   try {
     const users = await db.query(`
-      SELECT id, email, first_name, middle_name, last_name, phone
+      SELECT id, first_name, middle_name, last_name, phone
       FROM users
       WHERE payment_status = 'paid' AND password IS NULL
       ORDER BY first_name, last_name
@@ -212,7 +206,7 @@ const getDashboardStats = async (req, res) => {
     // Get recent users (last 10)
     const recentUsers = await db.query(`
       SELECT
-        u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
+        u.id, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         u.payment_status, u.is_approved, u.created_at,
         p.profile_picture
       FROM users u
@@ -249,7 +243,7 @@ const updateApprovalStatus = async (req, res) => {
 
     // Get user details before update
     const userResult = await db.query(
-      'SELECT email, first_name, last_name FROM users WHERE id = ?',
+      'SELECT first_name, last_name, phone FROM users WHERE id = ?',
       [userId]
     );
 
@@ -260,11 +254,7 @@ const updateApprovalStatus = async (req, res) => {
       [is_approved, userId]
     );
 
-    // Send email if approved
-    if (is_approved) {
-      const fullName = `${user.first_name} ${user.last_name}`;
-      await emailService.sendAccountApprovedEmail(user.email, fullName);
-    }
+    // Email notification skipped - users no longer have email
 
     res.json({
       success: true,
@@ -335,7 +325,6 @@ const deleteUser = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const {
-      email,
       first_name,
       middle_name,
       last_name,
@@ -347,28 +336,20 @@ const createUser = async (req, res) => {
       is_approved
     } = req.body;
 
-    // Check if email already exists (only if email is provided)
-    if (email) {
-      const existingUser = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-      if (existingUser.rows.length > 0) {
-        return res.status(400).json({ error: 'Email already exists' });
-      }
-    }
-
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert user
     const result = await db.query(
-      `INSERT INTO users (email, password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [email || null, hashedPassword, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved]
+      `INSERT INTO users (password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [hashedPassword, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved]
     );
 
     res.json({
       success: true,
       message: 'User created successfully',
-      user: { id: result.rows.insertId, email: email || null, first_name, last_name }
+      user: { id: result.rows.insertId, first_name, last_name }
     });
   } catch (error) {
     console.error('Create user error:', error);
@@ -386,10 +367,8 @@ const getAllMatches = async (req, res) => {
         m.status,
         m.created_at,
         CONCAT(u1.first_name, ' ', COALESCE(CONCAT(u1.middle_name, ' '), ''), u1.last_name) as user1_name,
-        u1.email as user1_email,
         p1.profile_picture as user1_picture,
         CONCAT(u2.first_name, ' ', COALESCE(CONCAT(u2.middle_name, ' '), ''), u2.last_name) as user2_name,
-        u2.email as user2_email,
         p2.profile_picture as user2_picture
       FROM matches m
       JOIN users u1 ON m.user_id = u1.id
@@ -431,7 +410,7 @@ const getApprovedUsers = async (req, res) => {
   try {
     const users = await db.query(`
       SELECT
-        u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
+        u.id, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
         p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
         p.about_me, p.looking_for, p.hobbies, p.profile_picture
@@ -499,13 +478,11 @@ const getAllInterests = async (req, res) => {
         i.updated_at,
         sender.id as sender_id,
         CONCAT(sender.first_name, ' ', COALESCE(CONCAT(sender.middle_name, ' '), ''), sender.last_name) as sender_name,
-        sender.email as sender_email,
         sender.age as sender_age,
         sender.gender as sender_gender,
         sp.profile_picture as sender_picture,
         receiver.id as receiver_id,
         CONCAT(receiver.first_name, ' ', COALESCE(CONCAT(receiver.middle_name, ' '), ''), receiver.last_name) as receiver_name,
-        receiver.email as receiver_email,
         receiver.age as receiver_age,
         receiver.gender as receiver_gender,
         rp.profile_picture as receiver_picture
@@ -552,7 +529,6 @@ const getInterestsByUser = async (req, res) => {
         i.updated_at,
         receiver.id as receiver_id,
         CONCAT(receiver.first_name, ' ', COALESCE(CONCAT(receiver.middle_name, ' '), ''), receiver.last_name) as receiver_name,
-        receiver.email as receiver_email,
         receiver.age as receiver_age,
         receiver.gender as receiver_gender
       FROM interests i
@@ -570,7 +546,6 @@ const getInterestsByUser = async (req, res) => {
         i.updated_at,
         sender.id as sender_id,
         CONCAT(sender.first_name, ' ', COALESCE(CONCAT(sender.middle_name, ' '), ''), sender.last_name) as sender_name,
-        sender.email as sender_email,
         sender.age as sender_age,
         sender.gender as sender_gender
       FROM interests i
@@ -595,7 +570,6 @@ const updateUserData = async (req, res) => {
   try {
     const { userId } = req.params;
     const {
-      email,
       first_name,
       middle_name,
       last_name,
@@ -604,25 +578,10 @@ const updateUserData = async (req, res) => {
       gender
     } = req.body;
 
-    // Check if email already exists for another user
-    if (email) {
-      const existingUser = await db.query(
-        'SELECT id FROM users WHERE email = ? AND id != ?',
-        [email, userId]
-      );
-      if (existingUser.rows.length > 0) {
-        return res.status(400).json({ error: 'Email already exists' });
-      }
-    }
-
     // Build dynamic update query
     const updates = [];
     const values = [];
 
-    if (email) {
-      updates.push('email = ?');
-      values.push(email);
-    }
     if (first_name) {
       updates.push('first_name = ?');
       values.push(first_name);
@@ -677,7 +636,7 @@ const getUsersWithPasswords = async (req, res) => {
   try {
     const users = await db.query(`
       SELECT
-        u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
+        u.id, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         u.payment_status, u.is_approved, u.password IS NOT NULL as has_password,
         u.plain_password, u.created_at,
         p.profile_picture
@@ -717,7 +676,7 @@ const assignMembership = async (req, res) => {
 
     // Get user details
     const userResult = await db.query(
-      'SELECT email, first_name, last_name FROM users WHERE id = ?',
+      'SELECT first_name, last_name, phone FROM users WHERE id = ?',
       [userId]
     );
 
@@ -743,9 +702,7 @@ const assignMembership = async (req, res) => {
       [membership_type, expiryDate, userId]
     );
 
-    // Send email notification
-    const fullName = `${user.first_name} ${user.last_name}`;
-    await emailService.sendPaymentConfirmedEmail(user.email, fullName);
+    // Email notification skipped - users no longer have email
 
     res.json({
       success: true,
@@ -789,7 +746,7 @@ const getFullUserProfile = async (req, res) => {
 
     const result = await db.query(`
       SELECT
-        u.id, u.email, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
+        u.id, u.first_name, u.middle_name, u.last_name, u.phone, u.age, u.gender,
         u.payment_status, u.membership_type, u.membership_expiry, u.is_approved, u.created_at,
         p.height, p.weight, p.marital_status, p.religion, p.caste, p.mother_tongue,
         p.education, p.occupation, p.annual_income, p.city, p.state, p.country,
@@ -828,7 +785,6 @@ const updateFullUserProfile = async (req, res) => {
     const { userId } = req.params;
     const {
       // User fields
-      email,
       first_name,
       middle_name,
       last_name,
@@ -864,22 +820,9 @@ const updateFullUserProfile = async (req, res) => {
 
     await client.query('START TRANSACTION');
 
-    // Check if email is already taken by another user
-    if (email) {
-      const existingUser = await client.query(
-        'SELECT id FROM users WHERE email = ? AND id != ?',
-        [email, userId]
-      );
-      if (existingUser.rows.length > 0) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ error: 'Email already exists' });
-      }
-    }
-
     // Update users table
     await client.query(`
       UPDATE users SET
-        email = COALESCE(?, email),
         first_name = COALESCE(?, first_name),
         middle_name = ?,
         last_name = COALESCE(?, last_name),
@@ -890,7 +833,7 @@ const updateFullUserProfile = async (req, res) => {
         is_approved = COALESCE(?, is_approved),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [email, first_name, middle_name, last_name, phone, ageInt, gender, payment_status, is_approved, userId]);
+    `, [first_name, middle_name, last_name, phone, ageInt, gender, payment_status, is_approved, userId]);
 
     // Check if profile exists
     const profileExists = await client.query(
@@ -1028,7 +971,6 @@ const bulkCreateUsers = async (req, res) => {
     for (const userData of users) {
       try {
         const {
-          email,
           first_name,
           middle_name,
           last_name,
@@ -1041,20 +983,10 @@ const bulkCreateUsers = async (req, res) => {
         } = userData;
 
         // Validate required fields
-        if (!email || !first_name || !last_name || !phone || !age || !gender) {
+        if (!first_name || !last_name || !phone || !age || !gender) {
           results.failed.push({
-            email: email || 'Unknown',
-            error: 'Missing required fields (email, first_name, last_name, phone, age, gender)'
-          });
-          continue;
-        }
-
-        // Check if email already exists
-        const existingUser = await client.query('SELECT id FROM users WHERE email = ?', [email]);
-        if (existingUser.rows.length > 0) {
-          results.failed.push({
-            email,
-            error: 'Email already exists'
+            phone: phone || 'Unknown',
+            error: 'Missing required fields (first_name, last_name, phone, age, gender)'
           });
           continue;
         }
@@ -1063,7 +995,7 @@ const bulkCreateUsers = async (req, res) => {
         const existingPhone = await client.query('SELECT id FROM users WHERE phone = ?', [phone]);
         if (existingPhone.rows.length > 0) {
           results.failed.push({
-            email,
+            phone,
             error: 'Phone number already exists'
           });
           continue;
@@ -1075,20 +1007,20 @@ const bulkCreateUsers = async (req, res) => {
 
         // Insert user
         const result = await client.query(
-          `INSERT INTO users (email, password, plain_password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [email, hashedPassword, userPassword, first_name, middle_name || null, last_name, phone, age, gender, payment_status, is_approved]
+          `INSERT INTO users (password, plain_password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [hashedPassword, userPassword, first_name, middle_name || null, last_name, phone, age, gender, payment_status, is_approved]
         );
 
         results.success.push({
           id: result.rows.insertId,
-          email,
+          phone,
           name: `${first_name} ${last_name}`,
           password: userPassword
         });
       } catch (userError) {
         results.failed.push({
-          email: userData.email || 'Unknown',
+          phone: userData.phone || 'Unknown',
           error: userError.message
         });
       }

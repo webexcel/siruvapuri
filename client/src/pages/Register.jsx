@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import { useModules } from '../context/ModuleContext';
 import { showSuccess, showError } from '../utils/sweetalert';
-import { User, Mail, Phone, Calendar, Users, Shield, Lock, Crown, Star, Award, Check } from 'lucide-react';
+import { User, Phone, Calendar, Users, Shield, Lock, Crown, Star, Award, Check } from 'lucide-react';
 import {
   motion,
   useScroll,
@@ -243,7 +243,6 @@ const Register = () => {
   const { isModuleEnabled } = useModules();
   const isMembershipEnabled = isModuleEnabled('membership');
   const [formData, setFormData] = useState({
-    email: '',
     first_name: '',
     middle_name: '',
     last_name: '',
@@ -323,7 +322,6 @@ const Register = () => {
         ...prev,
         first_name: firstName,
         last_name: lastName,
-        email: data.email || '',
         phone: data.mobile || '',
         gender: data.gender || '',
       }));
@@ -623,26 +621,6 @@ const Register = () => {
                     </div>
                   </motion.div>
 
-                  {/* Email Field */}
-                  <motion.div variants={itemVariants}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
-                        placeholder="your.email@example.com"
-                      />
-                    </div>
-                  </motion.div>
-
                   {/* Phone and Age Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <motion.div variants={itemVariants}>
@@ -806,7 +784,7 @@ const Register = () => {
                     className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm flex items-start gap-3"
                   >
                     <Lock className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                    <span>Admin will create your password after approval. You'll be notified via email.</span>
+                    <span>Admin will create your password after approval. You'll be notified once approved.</span>
                   </motion.div>
 
                   {/* Submit Button */}

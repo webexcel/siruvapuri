@@ -52,7 +52,6 @@ const AdminAddProfile = () => {
 
   const [formData, setFormData] = useState({
     // User table fields
-    email: '',
     first_name: '',
     middle_name: '',
     last_name: '',
@@ -166,7 +165,6 @@ const AdminAddProfile = () => {
     try {
       // Step 1: Create user account
       const createResponse = await adminUserAPI.createUser({
-        email: formData.email,
         first_name: formData.first_name,
         middle_name: formData.middle_name,
         last_name: formData.last_name,
@@ -322,10 +320,6 @@ const AdminAddProfile = () => {
           {/* Account Information */}
           <CollapsibleSection title="Account Information" icon={User}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Email</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} placeholder="user@example.com" />
-              </div>
               <div>
                 <label className={labelClass}>Phone *</label>
                 <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" pattern="[0-9]{10}" required />

@@ -32,7 +32,7 @@ const PrivacyPolicy = () => {
                 <p>When you register and use our services, we may collect:</p>
                 <ul>
                   <li>Name, age, gender, date of birth</li>
-                  <li>Contact information (email, phone number, address)</li>
+                  <li>Contact information (phone number, address)</li>
                   <li>Educational and professional details</li>
                   <li>Religious and community information</li>
                   <li>Physical attributes (height, weight, complexion)</li>

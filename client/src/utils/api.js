@@ -48,9 +48,9 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getCurrentUser: () => api.get('/auth/me'),
-  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
-  verifyOTP: (email, otp) => api.post('/auth/verify-otp', { email, otp }),
-  resetPassword: (email, resetToken, newPassword) => api.post('/auth/reset-password', { email, resetToken, newPassword }),
+  forgotPassword: (phone) => api.post('/auth/forgot-password', { phone }),
+  verifyOTP: (phone, otp) => api.post('/auth/verify-otp', { phone, otp }),
+  resetPassword: (phone, resetToken, newPassword) => api.post('/auth/reset-password', { phone, resetToken, newPassword }),
 };
 
 export const profileAPI = {

@@ -4,8 +4,8 @@ import { authAPI } from '../utils/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 
 const ForgotPassword = () => {
-  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState(1); // 1: Phone, 2: OTP, 3: New Password
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -37,9 +37,9 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.forgotPassword(email);
+      const response = await authAPI.forgotPassword(phone);
       if (response.data.success) {
-        showSuccess('OTP sent to your email!');
+        showSuccess('OTP sent to your phone!');
         setStep(2);
         startResendTimer();
       }
@@ -59,7 +59,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.verifyOTP(email, otp);
+      const response = await authAPI.verifyOTP(phone, otp);
       if (response.data.success) {
         showSuccess('OTP verified successfully!');
         setResetToken(response.data.resetToken);
@@ -92,7 +92,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.resetPassword(email, resetToken, newPassword);
+      const response = await authAPI.resetPassword(phone, resetToken, newPassword);
       if (response.data.success) {
         await showSuccess('Password reset successfully! You can now login.');
         navigate('/login');
@@ -114,9 +114,9 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await authAPI.forgotPassword(email);
+      const response = await authAPI.forgotPassword(phone);
       if (response.data.success) {
-        showSuccess('New OTP sent to your email!');
+        showSuccess('New OTP sent to your phone!');
         startResendTimer();
         setOtp('');
       }
@@ -138,8 +138,8 @@ const ForgotPassword = () => {
             {step === 3 && 'Reset Password'}
           </h1>
           <p className="text-gray-600">
-            {step === 1 && 'Enter your email to receive a password reset OTP'}
-            {step === 2 && 'Enter the OTP sent to your email'}
+            {step === 1 && 'Enter your phone number to receive a password reset OTP'}
+            {step === 2 && 'Enter the OTP sent to your phone'}
             {step === 3 && 'Create a new password for your account'}
           </p>
         </div>
@@ -182,20 +182,20 @@ const ForgotPassword = () => {
             </div>
           )}
 
-          {/* Step 1: Email Form */}
+          {/* Step 1: Phone Form */}
           {step === 1 && (
             <form onSubmit={handleRequestOTP} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
                 </label>
                 <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="input-field"
-                  placeholder="your.email@example.com"
+                  placeholder="Enter your registered phone number"
                   required
                 />
               </div>
@@ -228,7 +228,7 @@ const ForgotPassword = () => {
                   required
                 />
                 <p className="text-sm text-gray-500 mt-2 text-center">
-                  OTP sent to: <span className="font-medium">{email}</span>
+                  OTP sent to: <span className="font-medium">{phone}</span>
                 </p>
               </div>
 
@@ -256,7 +256,7 @@ const ForgotPassword = () => {
                 onClick={() => { setStep(1); setOtp(''); setError(''); }}
                 className="w-full text-gray-600 hover:text-gray-800 text-sm"
               >
-                Change Email
+                Change Phone Number
               </button>
             </form>
           )}

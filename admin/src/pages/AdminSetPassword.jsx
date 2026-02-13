@@ -61,7 +61,6 @@ const AdminSetPassword = () => {
       const search = searchTerm.toLowerCase();
       const filtered = users.filter(user =>
         `${user.first_name} ${user.last_name}`.toLowerCase().includes(search) ||
-        user.email.toLowerCase().includes(search) ||
         user.phone?.includes(search)
       );
       setFilteredUsers(filtered);
@@ -91,7 +90,7 @@ const AdminSetPassword = () => {
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
-    setSearchTerm(`${user.first_name} ${user.last_name} - ${user.email}`);
+    setSearchTerm(`${user.first_name} ${user.last_name} - ${user.phone}`);
     setIsDropdownOpen(false);
     setNewPassword('');
     setConfirmPassword('');
@@ -213,13 +212,11 @@ const AdminSetPassword = () => {
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setIsDropdownOpen(true);
-                    if (selectedUser && e.target.value !== `${selectedUser.first_name} ${selectedUser.last_name} - ${selectedUser.email}`) {
-                      setSelectedUser(null);
-                      setSelectedMembership('');
-                    }
+                    setSelectedUser(null);
+                    setSelectedMembership('');
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
-                  placeholder="Type to search by name, email or phone..."
+                  placeholder="Type to search by name or phone..."
                   className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -283,7 +280,6 @@ const AdminSetPassword = () => {
                                     <Check className="inline ml-2 text-green-500" size={16} />
                                   )}
                                 </div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
                                 <div className="text-xs text-gray-400">{user.phone}</div>
                               </div>
                             </div>
@@ -319,7 +315,6 @@ const AdminSetPassword = () => {
                     <h3 className="text-lg font-semibold text-gray-800">
                       {selectedUser.first_name} {selectedUser.last_name}
                     </h3>
-                    <p className="text-sm text-gray-500">{selectedUser.email}</p>
                   </div>
                 </div>
 
@@ -481,7 +476,7 @@ const AdminSetPassword = () => {
               <div className="text-center py-8 text-gray-500">
                 <User className="mx-auto mb-3 text-gray-300" size={48} />
                 <p>Search for a user above to assign membership and set password</p>
-                <p className="text-sm mt-1">You can search by name, email, or phone number</p>
+                <p className="text-sm mt-1">You can search by name or phone number</p>
               </div>
             )}
           </form>

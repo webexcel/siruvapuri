@@ -18,27 +18,27 @@ async function seedData() {
     // Sample users data - mix of male and female profiles
     const users = [
       // Female profiles
-      { email: 'priya.sharma@example.com', first_name: 'Priya', middle_name: null, last_name: 'Sharma', phone: '9840123456', age: 25, gender: 'female' },
-      { email: 'ananya.krishnan@example.com', first_name: 'Ananya', middle_name: null, last_name: 'Krishnan', phone: '9841234567', age: 27, gender: 'female' },
-      { email: 'divya.nair@example.com', first_name: 'Divya', middle_name: 'R', last_name: 'Nair', phone: '9842345678', age: 24, gender: 'female' },
-      { email: 'lakshmi.sundaram@example.com', first_name: 'Lakshmi', middle_name: null, last_name: 'Sundaram', phone: '9843456789', age: 26, gender: 'female' },
-      { email: 'meera.reddy@example.com', first_name: 'Meera', middle_name: 'S', last_name: 'Reddy', phone: '9944567890', age: 28, gender: 'female' },
-      { email: 'kavitha.murugan@example.com', first_name: 'Kavitha', middle_name: null, last_name: 'Murugan', phone: '9845678901', age: 23, gender: 'female' },
-      { email: 'deepa.venkat@example.com', first_name: 'Deepa', middle_name: 'K', last_name: 'Venkatesh', phone: '9846789012', age: 29, gender: 'female' },
-      { email: 'ramya.iyer@example.com', first_name: 'Ramya', middle_name: null, last_name: 'Iyer', phone: '9847890123', age: 25, gender: 'female' },
-      { email: 'sneha.pillai@example.com', first_name: 'Sneha', middle_name: null, last_name: 'Pillai', phone: '9848901234', age: 26, gender: 'female' },
-      { email: 'pooja.balan@example.com', first_name: 'Pooja', middle_name: 'M', last_name: 'Balan', phone: '9849012345', age: 24, gender: 'female' },
+      { first_name: 'Priya', middle_name: null, last_name: 'Sharma', phone: '9840123456', age: 25, gender: 'female' },
+      { first_name: 'Ananya', middle_name: null, last_name: 'Krishnan', phone: '9841234567', age: 27, gender: 'female' },
+      { first_name: 'Divya', middle_name: 'R', last_name: 'Nair', phone: '9842345678', age: 24, gender: 'female' },
+      { first_name: 'Lakshmi', middle_name: null, last_name: 'Sundaram', phone: '9843456789', age: 26, gender: 'female' },
+      { first_name: 'Meera', middle_name: 'S', last_name: 'Reddy', phone: '9944567890', age: 28, gender: 'female' },
+      { first_name: 'Kavitha', middle_name: null, last_name: 'Murugan', phone: '9845678901', age: 23, gender: 'female' },
+      { first_name: 'Deepa', middle_name: 'K', last_name: 'Venkatesh', phone: '9846789012', age: 29, gender: 'female' },
+      { first_name: 'Ramya', middle_name: null, last_name: 'Iyer', phone: '9847890123', age: 25, gender: 'female' },
+      { first_name: 'Sneha', middle_name: null, last_name: 'Pillai', phone: '9848901234', age: 26, gender: 'female' },
+      { first_name: 'Pooja', middle_name: 'M', last_name: 'Balan', phone: '9849012345', age: 24, gender: 'female' },
       // Male profiles
-      { email: 'arun.kumar@example.com', first_name: 'Arun', middle_name: null, last_name: 'Kumar', phone: '9962345678', age: 28, gender: 'male' },
-      { email: 'vijay.rajan@example.com', first_name: 'Vijay', middle_name: 'S', last_name: 'Rajan', phone: '9963456789', age: 30, gender: 'male' },
-      { email: 'karthik.nathan@example.com', first_name: 'Karthik', middle_name: null, last_name: 'Nathan', phone: '9964567890', age: 27, gender: 'male' },
-      { email: 'suresh.babu@example.com', first_name: 'Suresh', middle_name: 'K', last_name: 'Babu', phone: '9965678901', age: 29, gender: 'male' },
-      { email: 'rajesh.menon@example.com', first_name: 'Rajesh', middle_name: null, last_name: 'Menon', phone: '9966789012', age: 31, gender: 'male' },
-      { email: 'ganesh.naidu@example.com', first_name: 'Ganesh', middle_name: 'V', last_name: 'Naidu', phone: '9967890123', age: 26, gender: 'male' },
-      { email: 'mohan.raj@example.com', first_name: 'Mohan', middle_name: null, last_name: 'Raj', phone: '9968901234', age: 28, gender: 'male' },
-      { email: 'prasad.rao@example.com', first_name: 'Prasad', middle_name: 'B', last_name: 'Rao', phone: '9969012345', age: 32, gender: 'male' },
-      { email: 'dinesh.subbu@example.com', first_name: 'Dinesh', middle_name: null, last_name: 'Subramanian', phone: '9970123456', age: 27, gender: 'male' },
-      { email: 'senthil.kumar@example.com', first_name: 'Senthil', middle_name: 'M', last_name: 'Kumar', phone: '9971234567', age: 29, gender: 'male' },
+      { first_name: 'Arun', middle_name: null, last_name: 'Kumar', phone: '9962345678', age: 28, gender: 'male' },
+      { first_name: 'Vijay', middle_name: 'S', last_name: 'Rajan', phone: '9963456789', age: 30, gender: 'male' },
+      { first_name: 'Karthik', middle_name: null, last_name: 'Nathan', phone: '9964567890', age: 27, gender: 'male' },
+      { first_name: 'Suresh', middle_name: 'K', last_name: 'Babu', phone: '9965678901', age: 29, gender: 'male' },
+      { first_name: 'Rajesh', middle_name: null, last_name: 'Menon', phone: '9966789012', age: 31, gender: 'male' },
+      { first_name: 'Ganesh', middle_name: 'V', last_name: 'Naidu', phone: '9967890123', age: 26, gender: 'male' },
+      { first_name: 'Mohan', middle_name: null, last_name: 'Raj', phone: '9968901234', age: 28, gender: 'male' },
+      { first_name: 'Prasad', middle_name: 'B', last_name: 'Rao', phone: '9969012345', age: 32, gender: 'male' },
+      { first_name: 'Dinesh', middle_name: null, last_name: 'Subramanian', phone: '9970123456', age: 27, gender: 'male' },
+      { first_name: 'Senthil', middle_name: 'M', last_name: 'Kumar', phone: '9971234567', age: 29, gender: 'male' },
     ];
 
     // Random profile photos for testing - gender-appropriate portraits
@@ -99,9 +99,9 @@ async function seedData() {
     const userIds = [];
     for (const user of users) {
       const [result] = await pool.execute(
-        `INSERT INTO users (email, password, plain_password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'paid', true)`,
-        [user.email, hashedPassword, 'Test@123', user.first_name, user.middle_name, user.last_name, user.phone, user.age, user.gender]
+        `INSERT INTO users (password, plain_password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'paid', true)`,
+        [hashedPassword, 'Test@123', user.first_name, user.middle_name, user.last_name, user.phone, user.age, user.gender]
       );
       userIds.push(result.insertId);
       console.log(`  Created user: ${user.first_name} ${user.last_name} (ID: ${result.insertId})`);
@@ -148,9 +148,9 @@ async function seedData() {
     console.log(`Created ${users.length} users with profiles`);
     console.log('\nLogin credentials for all users:');
     console.log('Password: Test@123');
-    console.log('\nSample emails:');
-    console.log('  Female: priya.sharma@example.com, ananya.krishnan@example.com');
-    console.log('  Male: arun.kumar@example.com, vijay.rajan@example.com');
+    console.log('\nSample phones:');
+    console.log('  Female: 9840123456, 9841234567');
+    console.log('  Male: 9962345678, 9963456789');
 
   } catch (error) {
     console.error('Seed error:', error.message);
