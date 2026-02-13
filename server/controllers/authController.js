@@ -22,7 +22,7 @@ const register = async (req, res) => {
     const result = await db.query(
       `INSERT INTO users (first_name, middle_name, last_name, phone, age, gender, interested_membership, payment_status, is_approved)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', false)`,
-      [first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
+      [first_name, middle_name || null, last_name, phone, age || null, gender || null, interested_membership || null]
     );
 
     const userId = result.rows.insertId;
