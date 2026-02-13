@@ -85,11 +85,9 @@ function generateUser(index, gender) {
   const firstName = gender === 'male' ? getRandomElement(firstNamesMale) : getRandomElement(firstNamesFemale);
   const lastName = getRandomElement(lastNames);
   const age = getRandomNumber(21, 45);
-  const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index}@test.com`;
   const phone = `98${getRandomNumber(10000000, 99999999)}`;
 
   return {
-    email,
     password: null, // Will be set by admin
     first_name: firstName,
     middle_name: Math.random() > 0.5 ? getRandomElement(firstNamesMale.concat(firstNamesFemale)) : null,
@@ -225,9 +223,9 @@ async function seedUsers() {
 
       // Insert user
       const userResult = await client.query(
-        `INSERT INTO users (email, password, first_name, middle_name, last_name, phone, age, gender, is_approved, payment_status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [user.email, user.password, user.first_name, user.middle_name, user.last_name,
+        `INSERT INTO users (password, first_name, middle_name, last_name, phone, age, gender, is_approved, payment_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [user.password, user.first_name, user.middle_name, user.last_name,
          user.phone, user.age, user.gender, user.is_approved, user.payment_status]
       );
 

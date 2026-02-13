@@ -56,7 +56,6 @@ const AdminEditUser = () => {
 
   const [userData, setUserData] = useState({
     // User table fields
-    email: '',
     first_name: '',
     middle_name: '',
     last_name: '',
@@ -164,7 +163,6 @@ const AdminEditUser = () => {
       const data = response.data.user;
 
       setUserData({
-        email: data.email || '',
         first_name: data.first_name || '',
         middle_name: data.middle_name || '',
         last_name: data.last_name || '',
@@ -375,7 +373,7 @@ const AdminEditUser = () => {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Edit User Profile</h1>
             <p className="text-gray-600">
-              {userData.first_name} {userData.last_name} ({userData.email})
+              {userData.first_name} {userData.last_name}
             </p>
           </div>
         </div>
@@ -453,10 +451,6 @@ const AdminEditUser = () => {
           {/* Account Information */}
           <CollapsibleSection title="Account Information" icon={User}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Email</label>
-                <input type="email" name="email" value={userData.email} onChange={handleChange} className={inputClass} />
-              </div>
               <div>
                 <label className={labelClass}>Phone</label>
                 <input type="tel" name="phone" value={userData.phone} onChange={handleChange} className={inputClass} />

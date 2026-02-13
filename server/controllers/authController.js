@@ -2,7 +2,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../config/database');
-const emailService = require('../utils/emailService');
 
 // In-memory OTP storage (in production, use Redis or database)
 const otpStore = new Map();
@@ -10,15 +9,7 @@ const otpStore = new Map();
 // Register new user (without password, admin will set it)
 const register = async (req, res) => {
   try {
-    const { email, first_name, middle_name, last_name, phone, age, gender, interested_membership } = req.body;
-
-    // Check if email already exists (only if email is provided)
-    if (email) {
-      const existingUsers = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-      if (existingUsers.rows.length > 0) {
-        return res.status(400).json({ success: false, message: 'Email already registered' });
-      }
-    }
+    const { first_name, middle_name, last_name, phone, age, gender, interested_membership } = req.body;
 
     // Check if phone number already exists
     const existingPhone = await db.query('SELECT id FROM users WHERE phone = ?', [phone]);
@@ -29,9 +20,9 @@ const register = async (req, res) => {
 
     // Insert user without password (admin will set it later)
     const result = await db.query(
-      `INSERT INTO users (email, first_name, middle_name, last_name, phone, age, gender, interested_membership, payment_status, is_approved)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', false)`,
-      [email || null, first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
+      `INSERT INTO users (first_name, middle_name, last_name, phone, age, gender, interested_membership, payment_status, is_approved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', false)`,
+      [first_name, middle_name || null, last_name, phone, age, gender, interested_membership || null]
     );
 
     const userId = result.rows.insertId;
@@ -40,16 +31,10 @@ const register = async (req, res) => {
     await db.query('INSERT INTO profiles (user_id) VALUES (?)', [userId]);
     await db.query('INSERT INTO preferences (user_id) VALUES (?)', [userId]);
 
-    // Send welcome email (only if email is provided)
-    if (email) {
-      const fullName = `${first_name} ${last_name}`;
-      await emailService.sendWelcomeEmail(email, fullName);
-    }
-
     res.status(201).json({
       success: true,
       message: 'Registration successful! Admin will review and set your password.',
-      user: { id: userId, email: email || null, first_name, middle_name, last_name }
+      user: { id: userId, first_name, middle_name, last_name }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -60,18 +45,10 @@ const register = async (req, res) => {
 // Login user
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { login_id, password } = req.body;
 
-    // Find user by email or phone number
-    // Check if input looks like a phone number (10 digits)
-    const isPhoneNumber = /^\d{10}$/.test(email);
-
-    let users;
-    if (isPhoneNumber) {
-      users = await db.query('SELECT * FROM users WHERE phone = ?', [email]);
-    } else {
-      users = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-    }
+    // Find user by phone number
+    const users = await db.query('SELECT * FROM users WHERE phone = ?', [login_id]);
 
     if (users.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -111,7 +88,6 @@ const login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.email,
         full_name: full_name,
         gender: user.gender
       }
@@ -126,7 +102,7 @@ const login = async (req, res) => {
 const getCurrentUser = async (req, res) => {
   try {
     const users = await db.query(
-      `SELECT u.id, u.email,
+      `SELECT u.id,
               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.first_name, u.middle_name, u.last_name,
               u.phone, u.gender, u.age, u.created_at,
@@ -174,21 +150,21 @@ const generateOTP = () => {
 // Request password reset OTP
 const requestPasswordReset = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { phone } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
     }
 
-    // Find user by email
+    // Find user by phone
     const users = await db.query(
-      `SELECT id, email, first_name, last_name, is_approved, payment_status
-       FROM users WHERE email = ?`,
-      [email]
+      `SELECT id, first_name, last_name, is_approved, payment_status
+       FROM users WHERE phone = ?`,
+      [phone]
     );
 
     if (users.rows.length === 0) {
-      return res.status(404).json({ error: 'No account found with this email address' });
+      return res.status(404).json({ error: 'No account found with this phone number' });
     }
 
     const user = users.rows[0];
@@ -205,20 +181,19 @@ const requestPasswordReset = async (req, res) => {
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     // Store OTP
-    otpStore.set(email, {
+    otpStore.set(phone, {
       otp,
       expiresAt,
       userId: user.id,
       attempts: 0
     });
 
-    // Send OTP email
-    const fullName = `${user.first_name} ${user.last_name}`;
-    await emailService.sendPasswordResetOTPEmail(email, fullName, otp);
+    // TODO: Send OTP via SMS in production
+    console.log('Password reset OTP for phone ' + phone + ': ' + otp);
 
     res.json({
       success: true,
-      message: 'OTP sent to your email address'
+      message: 'OTP sent to your phone number'
     });
   } catch (error) {
     console.error('Request password reset error:', error);
@@ -229,13 +204,13 @@ const requestPasswordReset = async (req, res) => {
 // Verify OTP
 const verifyOTP = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { phone, otp } = req.body;
 
-    if (!email || !otp) {
-      return res.status(400).json({ error: 'Email and OTP are required' });
+    if (!phone || !otp) {
+      return res.status(400).json({ error: 'Phone number and OTP are required' });
     }
 
-    const storedData = otpStore.get(email);
+    const storedData = otpStore.get(phone);
 
     if (!storedData) {
       return res.status(400).json({ error: 'No OTP request found. Please request a new OTP.' });
@@ -243,13 +218,13 @@ const verifyOTP = async (req, res) => {
 
     // Check expiry
     if (Date.now() > storedData.expiresAt) {
-      otpStore.delete(email);
+      otpStore.delete(phone);
       return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
     }
 
     // Check attempts
     if (storedData.attempts >= 3) {
-      otpStore.delete(email);
+      otpStore.delete(phone);
       return res.status(400).json({ error: 'Too many incorrect attempts. Please request a new OTP.' });
     }
 
@@ -278,17 +253,17 @@ const verifyOTP = async (req, res) => {
 // Reset password
 const resetPassword = async (req, res) => {
   try {
-    const { email, resetToken, newPassword } = req.body;
+    const { phone, resetToken, newPassword } = req.body;
 
-    if (!email || !resetToken || !newPassword) {
-      return res.status(400).json({ error: 'Email, reset token, and new password are required' });
+    if (!phone || !resetToken || !newPassword) {
+      return res.status(400).json({ error: 'Phone number, reset token, and new password are required' });
     }
 
     if (newPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
-    const storedData = otpStore.get(email);
+    const storedData = otpStore.get(phone);
 
     if (!storedData || !storedData.resetToken) {
       return res.status(400).json({ error: 'Invalid reset session. Please start over.' });
@@ -301,7 +276,7 @@ const resetPassword = async (req, res) => {
 
     // Check token expiry
     if (Date.now() > storedData.resetTokenExpiry) {
-      otpStore.delete(email);
+      otpStore.delete(phone);
       return res.status(400).json({ error: 'Reset session expired. Please start over.' });
     }
 
@@ -315,18 +290,7 @@ const resetPassword = async (req, res) => {
     );
 
     // Clear OTP data
-    otpStore.delete(email);
-
-    // Send success email
-    const users = await db.query(
-      'SELECT first_name, last_name FROM users WHERE id = ?',
-      [storedData.userId]
-    );
-
-    if (users.rows.length > 0) {
-      const fullName = `${users.rows[0].first_name} ${users.rows[0].last_name}`;
-      await emailService.sendPasswordResetSuccessEmail(email, fullName);
-    }
+    otpStore.delete(phone);
 
     res.json({
       success: true,

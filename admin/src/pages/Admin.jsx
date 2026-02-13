@@ -135,7 +135,7 @@ const Admin = () => {
               <option value="">Choose a user...</option>
               {paidUsers.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.first_name} {user.middle_name || ''} {user.last_name} - {user.email} ({user.phone})
+                  {user.first_name} {user.middle_name || ''} {user.last_name} ({user.phone})
                 </option>
               ))}
             </select>
@@ -180,9 +180,6 @@ const Admin = () => {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -214,7 +211,7 @@ const Admin = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{user.email}</div>
+                    <div className="text-sm text-gray-500">{user.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{user.phone}</div>

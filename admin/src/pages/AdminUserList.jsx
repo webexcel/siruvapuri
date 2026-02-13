@@ -140,7 +140,6 @@ const AdminUserList = () => {
         (user) =>
           user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.phone?.includes(searchTerm)
       );
     }
@@ -423,7 +422,6 @@ const AdminUserList = () => {
                     <div className="font-semibold text-gray-900 truncate text-lg">
                       {user.first_name} {user.middle_name || ''} {user.last_name}
                     </div>
-                    <div className="text-sm text-gray-500 truncate">{user.email}</div>
                     <div className="text-sm text-gray-500">{user.phone}</div>
                   </div>
                 </div>
@@ -636,7 +634,6 @@ const AdminUserList = () => {
                       )}
                       {isColumnVisible('contact') && (
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{user.email}</div>
                           <div className="text-sm text-gray-500">{user.phone}</div>
                         </td>
                       )}

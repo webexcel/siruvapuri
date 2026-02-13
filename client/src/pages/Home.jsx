@@ -15,7 +15,6 @@ const Home = () => {
     first_name: '',
     last_name: '',
     gender: '',
-    email: '',
     phone: ''
   });
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,7 @@ const Home = () => {
         Swal.fire({
           icon: 'success',
           title: 'Registration Successful!',
-          text: 'Please wait for admin approval. You will receive your password via email.',
+          text: 'Please wait for admin approval. Admin will set your password after approval.',
           confirmButtonColor: '#8B1538',
         });
         // Reset form
@@ -46,7 +45,6 @@ const Home = () => {
           first_name: '',
           last_name: '',
           gender: '',
-          email: '',
           phone: ''
         });
       }
@@ -158,7 +156,7 @@ const Home = () => {
 
                 <form onSubmit={handleQuickRegister}>
                   {/* All fields in responsive grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
                     <input
                       type="text"
                       name="first_name"
@@ -188,15 +186,6 @@ const Home = () => {
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                     </select>
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Email *"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-2.5 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      required
-                    />
                     <div className="flex">
                       <span className="px-2 py-2 text-sm bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-600">
                         +91

@@ -114,7 +114,7 @@ const AdminAssignMatchNew = () => {
         const matchesSearch =
           user.first_name?.toLowerCase().includes(searchLower) ||
           user.last_name?.toLowerCase().includes(searchLower) ||
-          user.email?.toLowerCase().includes(searchLower);
+          user.phone?.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
 
@@ -285,7 +285,6 @@ const AdminAssignMatchNew = () => {
           <h3 className="text-xl font-bold text-gray-900">
             {user.first_name} {user.middle_name || ''} {user.last_name}
           </h3>
-          <p className="text-sm text-gray-500">{user.email}</p>
         </div>
       </div>
 
@@ -419,7 +418,7 @@ const AdminAssignMatchNew = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="Search by name or email..."
+                  placeholder="Search by name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -433,7 +432,7 @@ const AdminAssignMatchNew = () => {
                 const search = searchTerm.toLowerCase();
                 return u.first_name?.toLowerCase().includes(search) ||
                        u.last_name?.toLowerCase().includes(search) ||
-                       u.email?.toLowerCase().includes(search);
+                       u.phone?.toLowerCase().includes(search)
               }).map((user) => (
                 <div
                   key={user.id}
@@ -460,7 +459,6 @@ const AdminAssignMatchNew = () => {
                       <div className="text-sm font-medium text-gray-900 truncate">
                         {user.first_name} {user.last_name}
                       </div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
                       <div className="flex gap-2 mt-1">
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                           {user.age} yrs
@@ -675,7 +673,6 @@ const AdminAssignMatchNew = () => {
                           <div className="text-sm font-medium text-gray-900 truncate">
                             {user.first_name} {user.last_name}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">{user.email}</div>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">

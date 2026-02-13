@@ -13,7 +13,7 @@ const AdminBulkUpload = () => {
   const [showPasswords, setShowPasswords] = useState(false);
   const fileInputRef = useRef(null);
 
-  const requiredFields = ['email', 'first_name', 'last_name', 'phone', 'age', 'gender'];
+  const requiredFields = ['first_name', 'last_name', 'phone', 'age', 'gender'];
   const optionalFields = ['middle_name', 'password', 'payment_status', 'is_approved'];
 
   const handleFileChange = (e) => {
@@ -69,12 +69,6 @@ const AdminBulkUpload = () => {
             }
           });
 
-          // Validate email format
-          if (cleanRow.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanRow.email)) {
-            cleanRow._isValid = false;
-            cleanRow._errors.push('Invalid email format');
-          }
-
           // Validate phone (10 digits)
           if (cleanRow.phone && !/^\d{10}$/.test(cleanRow.phone)) {
             cleanRow._isValid = false;
@@ -114,7 +108,6 @@ const AdminBulkUpload = () => {
   const downloadTemplate = () => {
     const template = [
       {
-        email: 'user@example.com',
         first_name: 'John',
         middle_name: '',
         last_name: 'Doe',
@@ -305,7 +298,6 @@ const AdminBulkUpload = () => {
                   <tr className="bg-gray-50 border-b">
                     <th className="px-3 py-2 text-left font-semibold text-gray-700">Row</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-700">Email</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-700">Phone</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-700">Age</th>
@@ -324,7 +316,6 @@ const AdminBulkUpload = () => {
                           <XCircle className="text-red-500" size={18} />
                         )}
                       </td>
-                      <td className="px-3 py-2">{row.email}</td>
                       <td className="px-3 py-2">{`${row.first_name} ${row.middle_name || ''} ${row.last_name}`.trim()}</td>
                       <td className="px-3 py-2">{row.phone}</td>
                       <td className="px-3 py-2">{row.age}</td>
@@ -414,7 +405,6 @@ const AdminBulkUpload = () => {
                     <thead>
                       <tr className="bg-gray-50 border-b">
                         <th className="px-3 py-2 text-left font-semibold text-gray-700">ID</th>
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Email</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-700">Password</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-700">Actions</th>
@@ -424,14 +414,13 @@ const AdminBulkUpload = () => {
                       {uploadResults.success.map((user, index) => (
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="px-3 py-2">{user.id}</td>
-                          <td className="px-3 py-2">{user.email}</td>
                           <td className="px-3 py-2">{user.name}</td>
                           <td className="px-3 py-2 font-mono">
                             {showPasswords ? user.password : '••••••••'}
                           </td>
                           <td className="px-3 py-2">
                             <button
-                              onClick={() => copyToClipboard(`Email: ${user.email}\nPassword: ${user.password}`)}
+                              onClick={() => copyToClipboard(`Phone: ${user.phone}\nPassword: ${user.password}`)}
                               className="text-primary hover:text-primary-dark"
                               title="Copy credentials"
                             >
@@ -458,14 +447,12 @@ const AdminBulkUpload = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b">
-                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Email</th>
                         <th className="px-3 py-2 text-left font-semibold text-gray-700">Error</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadResults.failed.map((user, index) => (
                         <tr key={index} className="border-b hover:bg-red-50">
-                          <td className="px-3 py-2">{user.email}</td>
                           <td className="px-3 py-2 text-red-600">{user.error}</td>
                         </tr>
                       ))}
@@ -496,13 +483,12 @@ const AdminBulkUpload = () => {
               <h3 className="font-semibold text-blue-800 mb-2">Instructions</h3>
               <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
                 <li>Download the template file to see the required format</li>
-                <li><strong>Required fields:</strong> email, first_name, last_name, phone, age, gender</li>
+                <li><strong>Required fields:</strong> first_name, last_name, phone, age, gender</li>
                 <li><strong>Optional fields:</strong> middle_name, password, payment_status (paid/unpaid), is_approved (true/false)</li>
                 <li>Phone number must be exactly 10 digits</li>
                 <li>Age must be between 18 and 100</li>
                 <li>Gender must be: male, female, or other</li>
                 <li>If password is not provided, a random password will be generated</li>
-                <li>Email addresses must be unique - duplicates will be rejected</li>
               </ul>
             </div>
           </div>

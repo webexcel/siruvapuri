@@ -125,7 +125,7 @@ const HelpCenter = () => {
     'getting-started': [
       {
         question: 'How do I create an account?',
-        answer: 'Creating an account is easy! Click on the "Register" button on the homepage and fill in your basic details including name, email, phone number, and gender. After registration, you can complete your profile with additional information.'
+        answer: 'Creating an account is easy! Click on the "Register" button on the homepage and fill in your basic details including name, phone number, and gender. After registration, you can complete your profile with additional information.'
       },
       {
         question: 'Is registration free?',
@@ -169,7 +169,7 @@ const HelpCenter = () => {
       },
       {
         question: 'What happens when someone accepts my interest?',
-        answer: 'When your interest is accepted, you become a "match" and can communicate with each other. You\'ll be notified via email and on the platform.'
+        answer: 'When your interest is accepted, you become a "match" and can communicate with each other. You\'ll be notified on the platform.'
       },
       {
         question: 'Can I search for specific criteria?',

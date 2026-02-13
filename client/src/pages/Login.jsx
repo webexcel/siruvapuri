@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { showError } from "../utils/sweetalert";
-import { Mail, Lock, Shield, Eye, EyeOff } from "lucide-react";
+import { Phone, Lock, Shield, Eye, EyeOff } from "lucide-react";
 import {
   motion,
   useScroll,
@@ -255,7 +255,7 @@ const ParallaxLayer = ({
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: "",
+    login_id: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -299,7 +299,7 @@ const Login = () => {
       if (result.success) {
         navigate("/dashboard");
       } else {
-        showError(result.error || "Invalid email or password", "Login Failed");
+        showError(result.error || "Invalid credentials", "Login Failed");
       }
     } catch (err) {
       showError("Unable to login. Please try again later.", "Something went wrong");
@@ -519,22 +519,22 @@ const Login = () => {
 
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-                  {/* Email Field */}
+                  {/* Login Field */}
                   <motion.div variants={itemVariants}>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email ID / Mobile Number
+                      Mobile Number
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                        <Phone className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="text"
-                        name="email"
-                        value={formData.email}
+                        type="tel"
+                        name="login_id"
+                        value={formData.login_id}
                         onChange={handleChange}
                         className="w-full pl-12 pr-4 py-3 sm:py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 text-sm sm:text-base"
-                        placeholder="Enter your email or mobile"
+                        placeholder="Enter your 10-digit mobile number"
                         required
                       />
                     </div>

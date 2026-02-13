@@ -4,7 +4,7 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import { adminUserAPI, adminMembershipAPI } from '../utils/adminApi';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import Swal from 'sweetalert2';
-import { Search, UserPlus, Check, X, User, Mail, Phone, Calendar, Crown, Award } from 'lucide-react';
+import { Search, UserPlus, Check, X, User, Phone, Calendar, Crown, Award } from 'lucide-react';
 
 // Helper function to get color classes based on plan color
 const getColorClasses = (color) => {
@@ -175,7 +175,6 @@ const AdminAssignMembership = () => {
     const fullName = getFullName(user).toLowerCase();
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.phone?.includes(searchTerm);
 
     const matchesFilter =
@@ -304,7 +303,7 @@ const AdminAssignMembership = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Search by name, email or phone..."
+                placeholder="Search by name or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
@@ -374,8 +373,6 @@ const AdminAssignMembership = () => {
                       <td className="p-4">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-1 text-sm">
-                            <Mail size={14} className="text-gray-400" />
-                            {user.email}
                           </div>
                           <div className="flex items-center gap-1 text-sm">
                             <Phone size={14} className="text-gray-400" />

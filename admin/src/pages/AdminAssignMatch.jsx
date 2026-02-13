@@ -63,7 +63,7 @@ const AdminAssignMatch = () => {
         (user) =>
           user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+          user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -146,7 +146,6 @@ const AdminAssignMatch = () => {
           <div className="text-sm font-medium text-gray-900 truncate">
             {user.first_name} {user.middle_name || ''} {user.last_name}
           </div>
-          <div className="text-xs text-gray-500">{user.email}</div>
           <div className="flex gap-2 mt-1">
             <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
               {user.age} yrs
@@ -253,7 +252,6 @@ const AdminAssignMatch = () => {
                       <div className="font-semibold text-gray-900">
                         {selectedUser1.first_name} {selectedUser1.middle_name || ''} {selectedUser1.last_name}
                       </div>
-                      <div className="text-sm text-gray-500">{selectedUser1.email}</div>
                       <div className="text-sm text-gray-500">{selectedUser1.phone}</div>
                     </div>
                   </div>
@@ -287,7 +285,6 @@ const AdminAssignMatch = () => {
                       <div className="font-semibold text-gray-900">
                         {selectedUser2.first_name} {selectedUser2.middle_name || ''} {selectedUser2.last_name}
                       </div>
-                      <div className="text-sm text-gray-500">{selectedUser2.email}</div>
                       <div className="text-sm text-gray-500">{selectedUser2.phone}</div>
                     </div>
                   </div>

@@ -285,13 +285,11 @@ const AdminAnalytics = () => {
                     <td className="p-3">
                       <div>
                         <div className="font-medium">{interest.sender_name}</div>
-                        <div className="text-sm text-gray-500">{interest.sender_email}</div>
                       </div>
                     </td>
                     <td className="p-3">
                       <div>
                         <div className="font-medium">{interest.receiver_name}</div>
-                        <div className="text-sm text-gray-500">{interest.receiver_email}</div>
                       </div>
                     </td>
                     <td className="p-3">
