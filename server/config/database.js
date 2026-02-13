@@ -282,6 +282,27 @@ const initializeDatabase = async () => {
       await pool.execute('ALTER TABLE users DROP COLUMN email');
       console.log('email column dropped');
     }
+
+    // Make age and gender nullable (Home quick register doesn't collect these)
+    const [ageColCheck] = await pool.execute(`
+      SELECT IS_NULLABLE FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'age'
+    `);
+    if (ageColCheck.length > 0 && ageColCheck[0].IS_NULLABLE === 'NO') {
+      console.log('Making age column nullable...');
+      await pool.execute('ALTER TABLE users MODIFY COLUMN age INT DEFAULT NULL');
+      console.log('age column now nullable');
+    }
+
+    const [genderColCheck] = await pool.execute(`
+      SELECT IS_NULLABLE FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'gender'
+    `);
+    if (genderColCheck.length > 0 && genderColCheck[0].IS_NULLABLE === 'NO') {
+      console.log('Making gender column nullable...');
+      await pool.execute("ALTER TABLE users MODIFY COLUMN gender ENUM('male','female','other') DEFAULT NULL");
+      console.log('gender column now nullable');
+    }
   } catch (error) {
     console.error('Database initialization error:', error.message);
   }
