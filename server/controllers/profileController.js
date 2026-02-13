@@ -125,7 +125,7 @@ const getProfileById = async (req, res) => {
       `SELECT u.id,
               CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name,
               u.first_name, u.middle_name, u.last_name,
-              u.gender, u.age, u.email, u.phone,
+              u.gender, u.age, u.phone,
               u.membership_type, u.membership_expiry,
               CASE
                 WHEN u.membership_expiry IS NOT NULL AND u.membership_expiry > NOW() THEN true

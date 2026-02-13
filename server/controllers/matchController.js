@@ -322,8 +322,7 @@ const sendInterest = async (req, res) => {
 
     // Get receiver details
     const receiverResult = await db.query(
-      `SELECT u.email,
-              CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name
+      `SELECT CONCAT(u.first_name, COALESCE(CONCAT(' ', u.middle_name), ''), ' ', u.last_name) as full_name
        FROM users u
        WHERE u.id = ?`,
       [receiverId]
@@ -334,27 +333,7 @@ const sendInterest = async (req, res) => {
       [senderId, receiverId, message || '']
     );
 
-    // Send email notification to receiver
-    if (senderResult.rows.length > 0 && receiverResult.rows.length > 0) {
-      const sender = senderResult.rows[0];
-      const receiver = receiverResult.rows[0];
-
-      try {
-        await emailService.sendInterestReceivedEmail(
-          receiver.email,
-          sender.full_name,
-          receiver.full_name,
-          {
-            age: sender.age,
-            location: sender.city,
-            education: sender.education
-          }
-        );
-      } catch (emailError) {
-        console.error('Failed to send interest notification email:', emailError);
-        // Don't fail the request if email fails
-      }
-    }
+    // Email notification skipped - users no longer have email
 
     res.status(201).json({ message: 'Interest sent successfully' });
   } catch (error) {
@@ -428,7 +407,6 @@ const respondToInterest = async (req, res) => {
     // Verify the interest belongs to the user and get sender details
     const interestResult = await db.query(
       `SELECT i.*,
-              sender.email as sender_email,
               CONCAT(sender.first_name, COALESCE(CONCAT(' ', sender.middle_name), ''), ' ', sender.last_name) as sender_name,
               CONCAT(receiver.first_name, COALESCE(CONCAT(' ', receiver.middle_name), ''), ' ', receiver.last_name) as receiver_name
        FROM interests i
@@ -449,19 +427,7 @@ const respondToInterest = async (req, res) => {
       [status, interest_id]
     );
 
-    // Send email notification if accepted
-    if (status === 'accepted') {
-      try {
-        await emailService.sendInterestAcceptedEmail(
-          interest.sender_email,
-          interest.receiver_name,
-          interest.sender_name
-        );
-      } catch (emailError) {
-        console.error('Failed to send interest accepted email:', emailError);
-        // Don't fail the request if email fails
-      }
-    }
+    // Email notification skipped - users no longer have email
 
     res.json({ message: `Interest ${status} successfully` });
   } catch (error) {
