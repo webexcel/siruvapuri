@@ -492,7 +492,7 @@ const publicSearchProfiles = async (req, res) => {
              p.about_me, p.profile_picture
       FROM users u
       INNER JOIN profiles p ON u.id = p.user_id
-      WHERE (u.is_approved = true OR u.payment_status = 'paid')
+      WHERE 1=1
     `;
 
     const params = [];

@@ -45,6 +45,9 @@ const BlurredProfileCard = ({ profile }) => {
         {profile.occupation && (
           <p className="text-xs text-gray-500 truncate">{profile.occupation}</p>
         )}
+        {profile.caste && (
+          <p className="text-xs text-gray-500 truncate">{profile.caste}</p>
+        )}
       </div>
 
       {/* Blurred Contact Info Section */}
