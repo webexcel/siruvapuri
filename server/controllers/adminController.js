@@ -341,9 +341,9 @@ const createUser = async (req, res) => {
 
     // Insert user
     const result = await db.query(
-      `INSERT INTO users (password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [hashedPassword, first_name, middle_name || null, last_name, phone, age || null, gender || null, payment_status || 'unpaid', is_approved || false]
+      `INSERT INTO users (password, plain_password, first_name, middle_name, last_name, phone, age, gender, payment_status, is_approved)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [hashedPassword, password, first_name || '', middle_name || null, last_name || '', phone, age || null, gender || null, payment_status || 'unpaid', is_approved || false]
     );
 
     res.json({

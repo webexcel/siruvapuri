@@ -346,27 +346,27 @@ const AdminAddProfile = () => {
           <CollapsibleSection title="Primary Information" icon={User}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className={labelClass}>First Name *</label>
-                <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className={inputClass} required />
+                <label className={labelClass}>First Name</label>
+                <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Middle Name</label>
                 <input type="text" name="middle_name" value={formData.middle_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Last Name *</label>
-                <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} required />
+                <label className={labelClass}>Last Name</label>
+                <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Date of Birth (D.O.B)</label>
                 <input type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Age (Years) *</label>
-                <input type="number" name="age" value={formData.age} onChange={handleChange} className={inputClass} min="18" max="100" required />
+                <label className={labelClass}>Age (Years)</label>
+                <input type="number" name="age" value={formData.age} onChange={handleChange} className={inputClass} min="18" max="100" />
               </div>
               <div>
-                <label className={labelClass}>Gender *</label>
+                <label className={labelClass}>Gender</label>
                 <select name="gender" value={formData.gender} onChange={handleChange} className={inputClass}>
                   <option value="male">Male</option>
                   <option value="female">Female</option>

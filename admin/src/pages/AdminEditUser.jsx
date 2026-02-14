@@ -473,16 +473,16 @@ const AdminEditUser = () => {
           <CollapsibleSection title="Primary Information" icon={User}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className={labelClass}>First Name *</label>
-                <input type="text" name="first_name" value={userData.first_name} onChange={handleChange} className={inputClass} required />
+                <label className={labelClass}>First Name</label>
+                <input type="text" name="first_name" value={userData.first_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Middle Name</label>
                 <input type="text" name="middle_name" value={userData.middle_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Last Name *</label>
-                <input type="text" name="last_name" value={userData.last_name} onChange={handleChange} className={inputClass} required />
+                <label className={labelClass}>Last Name</label>
+                <input type="text" name="last_name" value={userData.last_name} onChange={handleChange} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Date of Birth (D.O.B)</label>
