@@ -58,9 +58,6 @@ const AdminAddProfile = () => {
     phone: '',
     age: '',
     gender: 'male',
-    password: '',
-    payment_status: 'unpaid',
-    is_approved: false,
 
     // Profile fields - Primary Information
     full_name: '',
@@ -163,6 +160,9 @@ const AdminAddProfile = () => {
     showLoading('Creating profile...');
 
     try {
+      // Auto-generate a password from phone number
+      const autoPassword = formData.phone ? formData.phone.slice(-6) : '123456';
+
       // Step 1: Create user account
       const createResponse = await adminUserAPI.createUser({
         first_name: formData.first_name,
@@ -171,9 +171,9 @@ const AdminAddProfile = () => {
         phone: formData.phone,
         age: formData.age,
         gender: formData.gender,
-        password: formData.password,
-        payment_status: formData.payment_status,
-        is_approved: formData.is_approved
+        password: autoPassword,
+        payment_status: 'unpaid',
+        is_approved: false
       });
 
       const userId = createResponse.data.user?.id || createResponse.data.userId;
@@ -317,37 +317,16 @@ const AdminAddProfile = () => {
             </div>
           </CollapsibleSection>
 
-          {/* Account Information */}
-          <CollapsibleSection title="Account Information" icon={User}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Phone *</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" pattern="[0-9]{10}" required />
-              </div>
-              <div>
-                <label className={labelClass}>Password *</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} className={inputClass} placeholder="Minimum 6 characters" minLength="6" required />
-              </div>
-              <div>
-                <label className={labelClass}>Payment Status</label>
-                <select name="payment_status" value={formData.payment_status} onChange={handleChange} className={inputClass}>
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2 pt-6">
-                <input type="checkbox" name="is_approved" checked={formData.is_approved} onChange={handleChange} className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary" />
-                <label className="text-sm font-medium text-gray-700">Approve Account</label>
-              </div>
-            </div>
-          </CollapsibleSection>
-
           {/* Primary Information */}
           <CollapsibleSection title="Primary Information" icon={User}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className={labelClass}>First Name</label>
                 <input type="text" name="first_name" value={formData.first_name} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Phone *</label>
+                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" pattern="[0-9]{10}" required />
               </div>
               <div>
                 <label className={labelClass}>Middle Name</label>
