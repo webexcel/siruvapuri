@@ -813,6 +813,9 @@ const updateFullUserProfile = async (req, res) => {
       profile_picture
     } = req.body;
 
+    // Helper to convert undefined to null (MySQL2 rejects undefined bind params)
+    const n = (value) => value === undefined ? null : value;
+
     // Convert numeric fields
     const ageInt = toIntOrNull(age);
     const heightInt = toIntOrNull(height);
@@ -833,7 +836,7 @@ const updateFullUserProfile = async (req, res) => {
         is_approved = COALESCE(?, is_approved),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [first_name, middle_name, last_name, phone, ageInt, gender, payment_status, is_approved, userId]);
+    `, [n(first_name), n(middle_name), n(last_name), n(phone), ageInt, n(gender), n(payment_status), n(is_approved), userId]);
 
     // Check if profile exists
     const profileExists = await client.query(
@@ -863,9 +866,9 @@ const updateFullUserProfile = async (req, res) => {
           created_by = ?,
           profile_picture = ?
         WHERE user_id = ?
-      `, [heightInt, weightInt, marital_status, religion, caste, mother_tongue,
-          education, occupation, annual_income, city, state, country,
-          about_me, looking_for, hobbies, created_by, profile_picture, userId]);
+      `, [heightInt, weightInt, n(marital_status), n(religion), n(caste), n(mother_tongue),
+          n(education), n(occupation), n(annual_income), n(city), n(state), n(country),
+          n(about_me), n(looking_for), n(hobbies), n(created_by), n(profile_picture), userId]);
     } else {
       // Insert new profile
       await client.query(`
@@ -874,9 +877,9 @@ const updateFullUserProfile = async (req, res) => {
           education, occupation, annual_income, city, state, country,
           about_me, looking_for, hobbies, created_by, profile_picture
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [userId, heightInt, weightInt, marital_status, religion, caste, mother_tongue,
-          education, occupation, annual_income, city, state, country,
-          about_me, looking_for, hobbies, created_by, profile_picture]);
+      `, [userId, heightInt, weightInt, n(marital_status), n(religion), n(caste), n(mother_tongue),
+          n(education), n(occupation), n(annual_income), n(city), n(state), n(country),
+          n(about_me), n(looking_for), n(hobbies), n(created_by), n(profile_picture)]);
     }
 
     await client.query('COMMIT');
