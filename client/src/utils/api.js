@@ -53,6 +53,10 @@ export const authAPI = {
   resetPassword: (phone, resetToken, newPassword) => api.post('/auth/reset-password', { phone, resetToken, newPassword }),
 };
 
+export const membershipAPI = {
+  getActivePlans: () => api.get('/membership-plans/active'),
+};
+
 export const profileAPI = {
   updateProfile: (data) => api.put('/profile/update', data),
   getProfile: (id) => api.get(`/profile/${id}`),

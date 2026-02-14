@@ -143,41 +143,41 @@ const initializeDatabase = async () => {
       console.log('site_settings table created successfully');
     }
 
-    // Migrate membership_type ENUM to include 'silver'
+    // Migrate membership_type from ENUM to VARCHAR for dynamic plan names
     const [membershipTypeCheck] = await pool.execute(`
-      SELECT COLUMN_TYPE FROM information_schema.columns
+      SELECT DATA_TYPE, COLUMN_TYPE FROM information_schema.columns
       WHERE table_schema = DATABASE()
       AND table_name = 'users'
       AND column_name = 'membership_type'
     `);
 
     if (membershipTypeCheck.length > 0) {
-      const columnType = membershipTypeCheck[0].COLUMN_TYPE;
-      if (!columnType.includes('silver')) {
-        console.log('Adding silver to membership_type ENUM...');
+      const dataType = membershipTypeCheck[0].DATA_TYPE;
+      if (dataType === 'enum') {
+        console.log('Migrating membership_type from ENUM to VARCHAR...');
         await pool.execute(`
-          ALTER TABLE users MODIFY COLUMN membership_type ENUM('gold', 'silver', 'platinum', 'premium') DEFAULT NULL
+          ALTER TABLE users MODIFY COLUMN membership_type VARCHAR(50) DEFAULT NULL
         `);
-        console.log('membership_type ENUM updated successfully');
+        console.log('membership_type migrated to VARCHAR successfully');
       }
     }
 
-    // Migrate interested_membership ENUM to include 'silver'
+    // Migrate interested_membership from ENUM to VARCHAR for dynamic plan names
     const [interestedMembershipCheck] = await pool.execute(`
-      SELECT COLUMN_TYPE FROM information_schema.columns
+      SELECT DATA_TYPE, COLUMN_TYPE FROM information_schema.columns
       WHERE table_schema = DATABASE()
       AND table_name = 'users'
       AND column_name = 'interested_membership'
     `);
 
     if (interestedMembershipCheck.length > 0) {
-      const columnType = interestedMembershipCheck[0].COLUMN_TYPE;
-      if (!columnType.includes('silver')) {
-        console.log('Adding silver to interested_membership ENUM...');
+      const dataType = interestedMembershipCheck[0].DATA_TYPE;
+      if (dataType === 'enum') {
+        console.log('Migrating interested_membership from ENUM to VARCHAR...');
         await pool.execute(`
-          ALTER TABLE users MODIFY COLUMN interested_membership ENUM('gold', 'silver', 'platinum', 'premium') DEFAULT NULL
+          ALTER TABLE users MODIFY COLUMN interested_membership VARCHAR(50) DEFAULT NULL
         `);
-        console.log('interested_membership ENUM updated successfully');
+        console.log('interested_membership migrated to VARCHAR successfully');
       }
     }
 

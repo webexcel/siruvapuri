@@ -8,6 +8,7 @@ const profileRoutes = require("./routes/profile");
 const matchRoutes = require("./routes/match");
 const adminRoutes = require("./routes/admin");
 const { getThemeSettings, getModuleSettings } = require("./controllers/settingsController");
+const { getActiveMembershipPlans } = require("./controllers/membershipController");
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -51,6 +52,7 @@ app.use("/api/admin", adminRoutes);
 
 app.get("/api/settings/theme", getThemeSettings);
 app.get("/api/settings/modules", getModuleSettings);
+app.get("/api/membership-plans/active", getActiveMembershipPlans);
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });

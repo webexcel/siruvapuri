@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { authAPI } from '../utils/api';
+import { authAPI, membershipAPI } from '../utils/api';
 import { useModules } from '../context/ModuleContext';
 import { showSuccess, showError } from '../utils/sweetalert';
 import { User, Phone, Calendar, Users, Shield, Lock, Crown, Star, Award, Check } from 'lucide-react';
@@ -252,42 +252,8 @@ const Register = () => {
     interested_membership: '',
   });
 
-  // Membership plans data
-  const membershipPlans = [
-    {
-      id: 'gold',
-      name: 'Gold',
-      price: '₹2,999',
-      duration: '3 Months',
-      icon: Award,
-      color: 'from-yellow-400 to-yellow-600',
-      borderColor: 'border-yellow-400',
-      bgColor: 'bg-yellow-50',
-      features: ['View 50 Profiles', 'Send 25 Interests', 'Chat Support'],
-    },
-    {
-      id: 'platinum',
-      name: 'Platinum',
-      price: '₹4,999',
-      duration: '6 Months',
-      icon: Star,
-      color: 'from-gray-400 to-gray-600',
-      borderColor: 'border-gray-400',
-      bgColor: 'bg-gray-50',
-      features: ['View 150 Profiles', 'Send 75 Interests', 'Priority Support', 'Profile Highlight'],
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      price: '₹7,999',
-      duration: '12 Months',
-      icon: Crown,
-      color: 'from-purple-500 to-purple-700',
-      borderColor: 'border-purple-500',
-      bgColor: 'bg-purple-50',
-      features: ['Unlimited Profiles', 'Unlimited Interests', '24/7 Support', 'Verified Badge'],
-    },
-  ];
+  // Membership plans fetched from API
+  const [membershipPlans, setMembershipPlans] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const prefersReducedMotion = useReducedMotion();
@@ -329,6 +295,62 @@ const Register = () => {
       localStorage.removeItem('quickRegisterData');
     }
   }, [location.state]);
+
+  // Fetch membership plans from API
+  useEffect(() => {
+    if (!isMembershipEnabled) return;
+
+    const fetchPlans = async () => {
+      try {
+        const response = await membershipAPI.getActivePlans();
+        if (response.data?.success && response.data.plans) {
+          const plans = response.data.plans.map((plan, index) => {
+            // Parse features if it's a string
+            const features = typeof plan.features === 'string' ? JSON.parse(plan.features) : (plan.features || []);
+            const color = plan.color || 'from-gray-400 to-gray-600';
+
+            // Map color family to Tailwind-safe border/bg classes
+            const colorMap = {
+              yellow: { borderColor: 'border-yellow-400', bgColor: 'bg-yellow-50' },
+              gray: { borderColor: 'border-gray-400', bgColor: 'bg-gray-50' },
+              purple: { borderColor: 'border-purple-400', bgColor: 'bg-purple-50' },
+              blue: { borderColor: 'border-blue-400', bgColor: 'bg-blue-50' },
+              green: { borderColor: 'border-green-400', bgColor: 'bg-green-50' },
+              red: { borderColor: 'border-red-400', bgColor: 'bg-red-50' },
+              pink: { borderColor: 'border-pink-400', bgColor: 'bg-pink-50' },
+              orange: { borderColor: 'border-orange-400', bgColor: 'bg-orange-50' },
+              amber: { borderColor: 'border-amber-400', bgColor: 'bg-amber-50' },
+              indigo: { borderColor: 'border-indigo-400', bgColor: 'bg-indigo-50' },
+            };
+            const colorMatch = color.match(/from-(\w+)-/);
+            const colorFamily = colorMatch ? colorMatch[1] : 'gray';
+            const { borderColor, bgColor } = colorMap[colorFamily] || colorMap.gray;
+
+            // Assign icons based on plan index
+            const icons = [Award, Star, Crown];
+            const icon = icons[index] || Crown;
+
+            return {
+              id: plan.name.toLowerCase(),
+              name: plan.name,
+              price: `₹${Number(plan.price).toLocaleString('en-IN')}`,
+              duration: `${plan.duration_months} Months`,
+              icon,
+              color,
+              borderColor,
+              bgColor,
+              features,
+            };
+          });
+          setMembershipPlans(plans);
+        }
+      } catch (err) {
+        console.error('Failed to fetch membership plans:', err);
+      }
+    };
+
+    fetchPlans();
+  }, [isMembershipEnabled]);
 
   const handleChange = (e) => {
     setFormData({

@@ -1,5 +1,22 @@
 const db = require('../config/database');
 
+// Get active membership plans (public - no auth required)
+const getActiveMembershipPlans = async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, name, price, duration_months, features, color, profile_views_limit FROM membership_plans WHERE is_active = true ORDER BY price ASC'
+    );
+
+    res.json({
+      success: true,
+      plans: result.rows
+    });
+  } catch (error) {
+    console.error('Get active membership plans error:', error);
+    res.status(500).json({ error: 'Failed to fetch membership plans' });
+  }
+};
+
 // Get all membership plans
 const getMembershipPlans = async (req, res) => {
   try {
@@ -381,6 +398,7 @@ const checkProfileViewLimit = async (req, res) => {
 };
 
 module.exports = {
+  getActiveMembershipPlans,
   getMembershipPlans,
   createMembershipPlan,
   updateMembershipPlan,
