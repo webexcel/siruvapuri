@@ -127,6 +127,7 @@ const getSidebarSettings = async (req, res) => {
         items: [
           { key: 'dashboard', label: 'Dashboard', path: '/dashboard', enabled: true },
           { key: 'users', label: 'User List', path: '/users', enabled: true },
+          { key: 'add-profile', label: 'Add Profile', path: '/add-profile', enabled: true },
           { key: 'bulk-upload', label: 'Bulk Upload', path: '/users/bulk-upload', enabled: true },
           { key: 'set-password', label: 'Set Password', path: '/set-password', enabled: true },
           { key: 'manage-passwords', label: 'Manage Passwords', path: '/manage-passwords', enabled: true },
@@ -140,7 +141,41 @@ const getSidebarSettings = async (req, res) => {
       return res.json({ settings: defaultSettings });
     }
 
-    res.json({ settings: result.rows[0].setting_value });
+    // Merge any new default items that are missing from saved settings
+    const savedSettings = typeof result.rows[0].setting_value === 'string'
+      ? JSON.parse(result.rows[0].setting_value)
+      : result.rows[0].setting_value;
+    const savedItems = savedSettings.items || [];
+    const savedKeys = new Set(savedItems.map(item => item.key));
+
+    const allDefaultItems = [
+      { key: 'dashboard', label: 'Dashboard', path: '/dashboard', enabled: true },
+      { key: 'users', label: 'User List', path: '/users', enabled: true },
+      { key: 'add-profile', label: 'Add Profile', path: '/add-profile', enabled: true },
+      { key: 'bulk-upload', label: 'Bulk Upload', path: '/users/bulk-upload', enabled: true },
+      { key: 'set-password', label: 'Set Password', path: '/set-password', enabled: true },
+      { key: 'manage-passwords', label: 'Manage Passwords', path: '/manage-passwords', enabled: true },
+      { key: 'matches', label: 'Matches', path: '/matches', enabled: true },
+      { key: 'assign-match', label: 'Assign Match', path: '/assign-match', enabled: true },
+      { key: 'interests', label: 'Interests', path: '/interests', enabled: true },
+      { key: 'membership', label: 'Membership Plans', path: '/membership', enabled: true },
+      { key: 'settings', label: 'Settings', path: '/settings', enabled: true }
+    ];
+
+    // Find new items not in saved settings and insert them at their default position
+    const newItems = allDefaultItems.filter(item => !savedKeys.has(item.key));
+    if (newItems.length > 0) {
+      let mergedItems = [...savedItems];
+      for (const newItem of newItems) {
+        const defaultIndex = allDefaultItems.findIndex(d => d.key === newItem.key);
+        const precedingKey = defaultIndex > 0 ? allDefaultItems[defaultIndex - 1].key : null;
+        const insertAfterIndex = precedingKey ? mergedItems.findIndex(m => m.key === precedingKey) : -1;
+        mergedItems.splice(insertAfterIndex + 1, 0, newItem);
+      }
+      savedSettings.items = mergedItems;
+    }
+
+    res.json({ settings: savedSettings });
   } catch (error) {
     console.error('Error fetching sidebar settings:', error);
     res.status(500).json({ error: 'Failed to fetch sidebar settings' });
