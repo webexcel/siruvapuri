@@ -394,13 +394,13 @@ const Home = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                 <a
-                  href="tel:+919999999999"
+                  href="tel:+919840575388"
                   className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base border-2 border-gray-800 text-gray-800 font-semibold rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 text-center"
                 >
                   Call Us
                 </a>
                 <a
-                  href="https://wa.me/919999999999"
+                  href="https://wa.me/919840575388"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-5 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-primary to-primary-light text-white font-semibold rounded-full transition-all duration-300 shadow-lg shadow-primary/30 hover:shadow-xl hover:-translate-y-0.5 text-center"

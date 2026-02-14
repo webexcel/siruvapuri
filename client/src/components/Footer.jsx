@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MessageCircle, Mail, Phone } from 'lucide-react';
+import { MessageCircle, Phone } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -29,7 +29,7 @@ const Footer = () => {
             {/* Social/Contact Icons */}
             <div className="flex space-x-2 sm:space-x-3">
               <a
-                href="https://wa.me/919999999999"
+                href="https://wa.me/919840575388"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all duration-300 hover:scale-110"
@@ -37,13 +37,7 @@ const Footer = () => {
                 <MessageCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
               </a>
               <a
-                href="mailto:info@siruvapurimurugan.com"
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all duration-300 hover:scale-110"
-              >
-                <Mail size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </a>
-              <a
-                href="tel:+919999999999"
+                href="tel:+919840575388"
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all duration-300 hover:scale-110"
               >
                 <Phone size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -122,17 +116,8 @@ const Footer = () => {
                 <Phone size={16} className="text-primary mt-0.5 sm:w-[18px] sm:h-[18px]" />
                 <div>
                   <p className="text-gray-400">Call us at</p>
-                  <a href="tel:+919999999999" className="text-white hover:text-primary transition-colors">
-                    +91 99999 99999
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 sm:gap-3">
-                <Mail size={16} className="text-primary mt-0.5 sm:w-[18px] sm:h-[18px]" />
-                <div>
-                  <p className="text-gray-400">Email us at</p>
-                  <a href="mailto:info@siruvapurimurugan.com" className="text-white hover:text-primary transition-colors text-xs sm:text-sm break-all">
-                    info@siruvapurimurugan.com
+                  <a href="tel:+919840575388" className="text-white hover:text-primary transition-colors">
+                    +91 98405 75388
                   </a>
                 </div>
               </div>

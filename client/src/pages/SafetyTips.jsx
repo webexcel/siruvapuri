@@ -210,7 +210,7 @@ const SafetyTips = () => {
                 Report via Email
               </a>
               <a
-                href="tel:+919999999999"
+                href="tel:+919840575388"
                 className="px-8 py-3 border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-semibold rounded-lg transition-colors duration-200"
               >
                 Call Safety Helpline

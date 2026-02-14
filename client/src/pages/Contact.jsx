@@ -76,13 +76,7 @@ const Contact = () => {
                 <ContactInfo
                   icon={<Phone className="text-primary" size={24} />}
                   title="Phone"
-                  details={["+91 99999 99999", "+91 88888 88888"]}
-                />
-
-                <ContactInfo
-                  icon={<Mail className="text-primary" size={24} />}
-                  title="Email"
-                  details={["info@siruvapurimurugan.com", "support@siruvapurimurugan.com"]}
+                  details={["+91 98405 75388"]}
                 />
 
                 <ContactInfo
@@ -93,7 +87,7 @@ const Contact = () => {
 
                 {/* WhatsApp Button */}
                 <a
-                  href="https://wa.me/919999999999"
+                  href="https://wa.me/919840575388"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors duration-200"

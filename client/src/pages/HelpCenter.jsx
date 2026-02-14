@@ -396,7 +396,7 @@ const HelpCenter = () => {
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                 <a
-                  href="https://wa.me/919999999999"
+                  href="https://wa.me/919840575388"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block px-8 py-3 border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white font-semibold rounded-lg transition-colors duration-200"
